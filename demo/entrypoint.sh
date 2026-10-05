@@ -36,6 +36,11 @@ rm -rf "$GRAV/cache/"* 2>/dev/null || true
 # Local test runs stop here (DEMO_NO_SERVER=1).
 [ -z "$DEMO_NO_SERVER" ] || exit 0
 
+# mod_php needs exactly one MPM; Railway's build can leave several enabled.
+a2dismod -q mpm_event mpm_worker >/dev/null 2>&1 || true
+rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.*
+a2enmod -q mpm_prefork >/dev/null 2>&1 || true
+
 # Listen on Railway's port.
 sed -i "s/^Listen .*/Listen ${PORT:-8080}/" /etc/apache2/ports.conf
 sed -i "s/<VirtualHost \*:[0-9]*>/<VirtualHost *:${PORT:-8080}>/" /etc/apache2/sites-available/000-default.conf
