@@ -1,0 +1,16 @@
+enabled: true
+# The key comes from the SUPERTEXT_API_KEY environment variable (Railway).
+api_key: ''
+api_url: 'https://api.supertext.com/v1/'
+source_language: en
+language_codes:
+  de: de-CH
+  fr: fr-CH
+politeness: default
+header_fields:
+  - title
+  - menu
+  - metadata.description
+publish_new_translations: false
+poll_interval: 2
+poll_timeout: 300

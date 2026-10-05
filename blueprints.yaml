@@ -1,0 +1,130 @@
+name: Supertext Translation
+slug: supertext-translation
+type: plugin
+version: 0.1.0
+description: Translate pages into your site's other languages with Supertext AI translation, from the page editor of Admin2.
+icon: language
+author:
+  name: Supertext
+  email: support@supertext.com
+  url: https://www.supertext.com
+homepage: https://github.com/Supertext/Grav-Supertext-Translation
+keywords: translation, multilanguage, supertext, ai, localization
+bugs: https://github.com/Supertext/Grav-Supertext-Translation/issues
+docs: https://github.com/Supertext/Grav-Supertext-Translation/blob/main/docs/INSTALLATION.md
+license: MIT
+compatibility:
+  grav: ['2.0']
+
+dependencies:
+  - { name: grav, version: '>=2.1.5' }
+  - { name: api, version: '>=1.0.44' }
+  - { name: admin2, version: '>=2.1.0' }
+
+form:
+  validation: loose
+  fields:
+    enabled:
+      type: toggle
+      label: Plugin status
+      highlight: 1
+      default: 1
+      options:
+        1: Enabled
+        0: Disabled
+      validate:
+        type: bool
+
+    connection:
+      type: section
+      title: Supertext account
+      underline: true
+
+    api_key:
+      type: password
+      label: API key
+      autocomplete: off
+      help: Your Supertext API key. You can paste it with or without the "Supertext-Auth-Key" prefix. Leave empty to use the SUPERTEXT_API_KEY environment variable.
+      validate:
+        max: 1024
+
+    api_url:
+      type: text
+      label: API endpoint
+      default: 'https://api.supertext.com/v1/'
+      help: Only change this if Supertext gives you a different endpoint.
+
+    languages_section:
+      type: section
+      title: Languages
+      underline: true
+
+    source_language:
+      type: text
+      label: Source language
+      placeholder: Site default language
+      help: Grav language code the translations are made from, e.g. "en". Empty means the site's default language.
+
+    language_codes:
+      type: array
+      label: Supertext language codes
+      placeholder_key: Grav code, e.g. de
+      placeholder_value: Supertext code, e.g. de-CH
+      help: Which language variant Supertext translates into. Without an entry, the Grav code is used as it is.
+
+    politeness:
+      type: select
+      label: Form of address
+      default: default
+      options:
+        default: Supertext default
+        more: Formal (Sie, vous)
+        less: Informal (du, tu)
+      help: Only applies to languages that distinguish formal and informal address.
+
+    content_section:
+      type: section
+      title: What is translated
+      underline: true
+
+    header_fields:
+      type: selectize
+      label: Front matter fields
+      default: [title, menu, metadata.description]
+      help: Front matter fields translated together with the page content. Use dots for nested fields, e.g. metadata.description.
+      validate:
+        type: commalist
+
+    publish_new_translations:
+      type: toggle
+      label: Publish new translations
+      default: 0
+      highlight: 0
+      options:
+        1: Publish right away
+        0: Create unpublished for review
+      validate:
+        type: bool
+
+    advanced_section:
+      type: section
+      title: Advanced
+      underline: true
+
+    poll_interval:
+      type: number
+      label: Status check interval (seconds)
+      default: 2
+      validate:
+        type: int
+        min: 1
+        max: 30
+
+    poll_timeout:
+      type: number
+      label: Maximum wait (seconds)
+      default: 300
+      validate:
+        type: int
+        min: 10
+        max: 1800

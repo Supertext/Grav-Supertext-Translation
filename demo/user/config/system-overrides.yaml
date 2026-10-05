@@ -1,0 +1,18 @@
+# Merged into user/config/system.yaml by the demo entrypoint.
+languages:
+  supported: [en, de, fr]
+  default_lang: en
+  include_default_lang: true
+  include_default_lang_file_extension: true
+  translations: true
+  translations_fallback: true
+  # A page without a published translation is shown in English.
+  content_fallback:
+    de: [de, en]
+    fr: [fr, en]
+# Railway terminates TLS in front of the container.
+http_x_forwarded:
+  protocol: true
+  host: false
+  ip: true
+  port: false

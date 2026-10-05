@@ -1,0 +1,31 @@
+enabled: true
+
+# Supertext API key. Leave empty to use the SUPERTEXT_API_KEY environment variable.
+# The key can be pasted with or without its "Supertext-Auth-Key " prefix.
+api_key: ''
+
+# Supertext AI file translation API v1.
+api_url: 'https://api.supertext.com/v1/'
+
+# Language the translations are made from. Empty = the site's default language.
+source_language: ''
+
+# Which code Supertext gets for each Grav language. Without an entry, the Grav code
+# is sent as is ("de-ch" becomes "de-CH"). Example: { de: de-CH, fr: fr-CH }
+language_codes: {}
+
+# Formal or informal address in languages that have it: default, more (formal), less (informal).
+politeness: default
+
+# Front matter fields translated together with the page content (dot paths).
+header_fields:
+  - title
+  - menu
+  - metadata.description
+
+# New translations are created unpublished, so an editor can review them first.
+publish_new_translations: false
+
+# Seconds between status checks, and how long to wait for Supertext in total.
+poll_interval: 2
+poll_timeout: 300

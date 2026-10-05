@@ -1,0 +1,10 @@
+vendor
+tests
+docs
+node_modules
+.git
+.github
+scripts
+*.md
+!README.md
+!CHANGELOG.md

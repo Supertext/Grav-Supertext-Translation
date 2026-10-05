@@ -1,0 +1,6 @@
+vendor/
+.phpunit.cache/
+/demo/data/
+.env
+node_modules/
+.cache/
