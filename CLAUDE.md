@@ -50,4 +50,4 @@ Lessons from testing against the live API (October 2026), to apply in every plug
 - Grav 2 only: the UI is a context panel in **Admin2** (`admin-next/panels/supertext-translation.js`, registered via `onApiContextPanels`), backed by routes registered with `onApiRegisterRoutes`. Admin2 fires no `onAdmin*` editor events.
 - Page logic (`classes/PageTranslator.php`, `classes/Markdown/`) has no Grav dependency and is unit-tested; keep it that way.
 - `composer test` before every commit; `composer docs:screenshots` when the panel, settings or demo content change.
-- Demo: `demo/` (Dockerfile built from the repo root, `entrypoint.sh`, `seed-accounts.php`, `configure.php`). Railway service `grav` in `supertext-cms-demos`.
+- Demo: `demo/` (Dockerfile built from the repo root, `entrypoint.sh`, `seed-accounts.php`, `configure.php`). Railway service `Grav` in the project `supertext-cms-demos-php`, https://grav-production.up.railway.app.

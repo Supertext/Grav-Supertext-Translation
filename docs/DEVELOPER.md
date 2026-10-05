@@ -74,7 +74,7 @@ Lessons applied from the live API (October 2026):
 - All target languages are submitted first, then polled together, so three languages take about as long as one. One failing language doesn't stop the others.
 - Documents over 900,000 characters are refused before sending.
 
-Verified against the live API on 2026-10-05: the demo's About page into `de-CH` and `fr-CH` in 9 s, with bold text moved correctly inside the translated sentence.
+Verified against the live API on 2026-10-05: the demo's About page into `de-CH` and `fr-CH` in 7 to 9 s (locally and on the Railway demo), with bold text moved correctly inside the translated sentence.
 
 ## Local setup
 
@@ -123,10 +123,11 @@ composer docs:screenshots
 
 ## Demo
 
-The demo runs on Railway (project `supertext-cms-demos`, service `grav`, region Amsterdam), built from `demo/Dockerfile` with the repository root as build context. Pushes to `main` deploy automatically.
+The demo runs on Railway (project `supertext-cms-demos-php`, service `Grav`, region Amsterdam, 1 GB volume `grav-data`), built from `demo/Dockerfile` with the repository root as build context. Pushes to `main` deploy automatically once Railway's GitHub app has access to this repository (Supertext organisation settings → Installations → Railway); until then, redeploy from the Railway dashboard.
 
 - **URL:** https://grav-production.up.railway.app, admin at `/admin`
-- **Image:** `php:8.3-apache`, Grav + Admin2 2.2.4 from getgrav.org, the plugin copied from this repository.
+- **Healthcheck:** `/en`.
+- **Image:** `php:8.3-apache` (only the prefork MPM is loaded at start, see the entrypoint), Grav + Admin2 2.2.4 from getgrav.org, the plugin copied from this repository.
 - **Volume** at `/data`: `user/pages`, `user/accounts`, `user/config` and `user/data` are symlinked there. Grav core, plugins and themes always come from the image, so a deploy updates the plugin.
 - **On every start** (`demo/entrypoint.sh`): seeds the sample pages on a fresh volume, merges the languages (`en` source, `de`, `fr`) into `system.yaml` (`demo/configure.php`), writes the plugin settings only if there are none yet (`de` → `de-CH`, `fr` → `fr-CH`), creates the demo accounts (`demo/seed-accounts.php`), then starts Apache on `$PORT`.
 
