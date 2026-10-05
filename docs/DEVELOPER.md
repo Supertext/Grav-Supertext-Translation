@@ -123,7 +123,7 @@ composer docs:screenshots
 
 ## Demo
 
-The demo runs on Railway (project `supertext-cms-demos-php`, service `Grav`, region Amsterdam, 1 GB volume `grav-data`), built from `demo/Dockerfile` with the repository root as build context. Pushes to `main` deploy automatically once Railway's GitHub app has access to this repository (Supertext organisation settings → Installations → Railway); until then, redeploy from the Railway dashboard.
+The demo runs on Railway (project `supertext-cms-demos-php`, service `Grav`, region Amsterdam, 1 GB volume `grav-data`), built from `demo/Dockerfile` with the repository root as build context. Pushes to `main` deploy automatically (Railway's GitHub app has access to this repository via the Supertext organisation's installations).
 
 - **URL:** https://grav-production.up.railway.app, admin at `/admin`
 - **Healthcheck:** `/en`.
