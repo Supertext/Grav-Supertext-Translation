@@ -169,7 +169,10 @@ class SupertextTranslationPanel extends HTMLElement {
 
             if (!s.api_key_configured) {
                 body += `<div class="st-box st-warn">No Supertext API key is configured yet. An administrator
-                    can add it under Plugins → Supertext Translation.</div>`;
+                    can add it under Plugins → Supertext Translation. No Supertext account yet?
+                    <a href="https://www.supertext.com/person/en/account/signin" target="_blank" rel="noopener noreferrer">Create one at supertext.com</a>.
+                    Generate the API key at <a href="https://www.supertext.com/en/integrations/api" target="_blank" rel="noopener noreferrer">supertext.com → Integrations → API</a>
+                    (requires the Admin role).</div>`;
             }
             if (!s.languages.length) {
                 body += `<div class="st-box st-info">This site has no other languages. Add languages in the

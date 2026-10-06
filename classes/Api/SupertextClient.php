@@ -164,7 +164,7 @@ final class SupertextClient
     {
         $key = self::normalizeKey($this->apiKey);
         if ($key === '') {
-            throw new SupertextException('No Supertext API key is configured. An administrator can add it in the plugin settings.');
+            throw new SupertextException('No Supertext API key is configured. An administrator can add it in the plugin settings; generate it at https://www.supertext.com/en/integrations/api (requires the Admin role).');
         }
         $headers = [
             // Exactly one prefix, header name "Authorization" (anything else is refused).
@@ -194,7 +194,7 @@ final class SupertextClient
             return $response;
         }
         $message = match (true) {
-            $status === 401, $status === 403 => 'Supertext refused the API key. Please check it in the plugin settings.',
+            $status === 401, $status === 403 => 'Supertext refused the API key. Please check it in the plugin settings, or generate a new one at https://www.supertext.com/en/integrations/api (requires the Admin role).',
             $status === 404 => 'Supertext could not find the requested file.',
             $status === 413 => 'The page is too long to translate in one go.',
             $status === 429 => 'Supertext is busy (too many requests). Please try again in a moment.',

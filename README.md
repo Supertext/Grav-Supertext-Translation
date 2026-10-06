@@ -9,7 +9,7 @@ Translate Grav pages into your site's other languages with [Supertext](https://w
 
 ![The Supertext panel in the Grav page editor, after translating into German and French](docs/images/panel-after.png)
 
-Requires Grav 2.0+ with Admin2 and the API plugin, and a Supertext API key.
+Requires Grav 2.0+ with Admin2 and the API plugin, and a Supertext API key. No account yet? [Create one at supertext.com](https://www.supertext.com/person/en/account/signin), then generate the key at [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api) (requires the Admin role); see [Installation](docs/INSTALLATION.md#api-key).
 
 ## Documentation
 

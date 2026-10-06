@@ -72,7 +72,7 @@ final class TranslationController extends AbstractApiController
         }
         $requested = array_values(array_diff($requested, [$source]));
         if ($settings->apiKey === '') {
-            throw new ValidationException('No Supertext API key is configured. An administrator can add it in the Supertext Translation plugin settings.');
+            throw new ValidationException('No Supertext API key is configured. An administrator can add it in the Supertext Translation plugin settings; generate it at https://www.supertext.com/en/integrations/api (requires the Admin role).');
         }
 
         @set_time_limit($settings->pollTimeout + 120);

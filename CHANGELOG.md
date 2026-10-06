@@ -13,4 +13,5 @@
 - API routes `GET /api/v1/supertext/status` and `POST /api/v1/supertext/translate`.
 - Retries for the Supertext rate limit (HTTP 429), parallel translation into several languages.
 - Railway demo with English, German and French, sample pages and `DEMO_ADMIN_*` / `DEMO_EDITOR_*` accounts.
+- Links to create a Supertext account and to generate the API key (supertext.com → Integrations → API, Admin role required) in the API key setting, the panel's "no API key" message, API key error messages and the docs.
 - Installation guide, user guide, developer guide with screenshots, and a script to regenerate them.

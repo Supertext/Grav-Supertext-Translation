@@ -83,7 +83,7 @@ Not handled by the plugin:
 
 | Message | What it means and what to do |
 | --- | --- |
-| No Supertext API key is configured yet | The administrator still has to enter the Supertext API key. Translating is disabled until then. |
+| No Supertext API key is configured yet | The administrator still has to enter the Supertext API key. Translating is disabled until then. The message links to Supertext's signup page and to the page where the key is generated (supertext.com → Integrations → API, requires the Admin role). |
 | Supertext refused the API key | The key is wrong or no longer valid. Ask your administrator. |
 | Your Supertext translation limit is exceeded | Your Supertext plan's limit is reached. Contact Supertext or your administrator. |
 | Supertext is busy (too many requests) | Wait a moment and try again. |

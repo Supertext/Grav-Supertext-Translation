@@ -45,6 +45,8 @@ form:
       label: API key
       autocomplete: off
       help: Your Supertext API key. You can paste it with or without the "Supertext-Auth-Key" prefix. Leave empty to use the SUPERTEXT_API_KEY environment variable.
+      markdown: true
+      description: 'No Supertext account yet? <a href="https://www.supertext.com/person/en/account/signin" target="_blank" rel="noopener noreferrer">Create one at supertext.com</a>. Generate your API key at <a href="https://www.supertext.com/en/integrations/api" target="_blank" rel="noopener noreferrer">supertext.com → Integrations → API</a> (requires the Admin role).'
       validate:
         max: 1024
 

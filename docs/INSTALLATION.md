@@ -8,7 +8,7 @@ This guide is for administrators of a Grav site. It covers installing the plugin
 - The **Admin2** and **API** plugins (bundled with the "Grav + Admin" download; Admin2 ≥ 2.1, API ≥ 1.0.44)
 - PHP 8.3 or later with the `curl`, `dom` and `mbstring` extensions (all standard)
 - Outgoing HTTPS from the web server to `api.supertext.com`
-- A Supertext account with an API key for AI translation
+- A Supertext account with an API key for AI translation (see [API key](#api-key))
 - At least two site languages (see [Language setup](#language-setup))
 
 The classic Grav 1.x admin is not supported: the plugin adds its button to the Admin2 page editor.
@@ -44,7 +44,10 @@ Translations already made stay as normal Grav language files (`default.de.md` et
 
 ## API key
 
-Get the key from your Supertext account. Supertext shows it as `Supertext-Auth-Key …`; paste it with or without that prefix.
+1. **Supertext account:** no account yet? [Create one at supertext.com](https://www.supertext.com/person/en/account/signin) (log in or create an account with your email address).
+2. **API key:** generate it at [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api). This requires the **Admin** role in your Supertext account; if you don't have it, ask your Supertext account's administrator.
+
+Supertext shows the key as `Supertext-Auth-Key …`; paste it with or without that prefix. The plugin settings show the same two links below the API key field.
 
 You can store it in one of two places:
 
@@ -131,8 +134,8 @@ access:
 | Problem | Cause and fix |
 | --- | --- |
 | No Supertext button in the page editor | The plugin is disabled, the browser still has the old admin loaded (reload the page), or the user lacks page permissions. The button only exists in Admin2, not in the classic admin. |
-| "No Supertext API key is configured" | Enter the key in the settings, or set `SUPERTEXT_API_KEY` for the web server process (not only for your shell). |
-| "Supertext refused the API key" | Wrong or revoked key. Copy it again from your Supertext account. |
+| "No Supertext API key is configured" | Generate a key (see [API key](#api-key)) and enter it in the settings, or set `SUPERTEXT_API_KEY` for the web server process (not only for your shell). |
+| "Supertext refused the API key" | Wrong or revoked key. Copy it again, or generate a new one, at [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api) (requires the Admin role). |
 | "This site has only one language" | Add languages under **Configuration → System → Languages**. |
 | Translations stop after about 30–60 seconds | A proxy or PHP limit ends the request first. Raise `max_execution_time` and the proxy/web-server timeout above *Maximum wait*. |
 | "Could not reach Supertext" | The server can't make outgoing HTTPS requests to `api.supertext.com` (firewall, proxy, missing CA certificates). |
