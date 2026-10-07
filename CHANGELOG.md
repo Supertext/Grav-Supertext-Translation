@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.0 — 2026-10-07
+
 ### Added
 
 - Supertext translation panel in the Admin2 page editor: shows each site language with its state (not translated, up to date, source changed, edited, not from Supertext) and translates the page into the chosen languages at once.

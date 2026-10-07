@@ -17,11 +17,13 @@ The classic Grav 1.x admin is not supported: the plugin adds its button to the A
 
 The plugin is not in the Grav package index (GPM) yet; install it from GitHub.
 
-**From a release or the main branch:**
+**From a release (recommended):**
 
-1. Download the repository as a ZIP from <https://github.com/Supertext/Grav-Supertext-Translation> (*Code → Download ZIP*).
-2. Unzip it into `user/plugins/` and rename the folder to **`supertext-translation`**. The folder must contain `supertext-translation.php`.
+1. Download `supertext-translation-<version>.zip` from the [Releases page](https://github.com/Supertext/Grav-Supertext-Translation/releases).
+2. Unzip it into `user/plugins/`. It already contains the folder **`supertext-translation`** with `supertext-translation.php` inside.
 3. In the admin, open **Plugins**: *Supertext Translation* is listed and enabled. If it isn't, enable it.
+
+**From the main branch:** download the repository as a ZIP from <https://github.com/Supertext/Grav-Supertext-Translation> (*Code → Download ZIP*), unzip it into `user/plugins/` and rename the folder to **`supertext-translation`**, then enable it as above.
 
 **With Git:**
 
