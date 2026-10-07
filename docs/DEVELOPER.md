@@ -146,11 +146,16 @@ Grav has an editor role only as permissions, not as a named role; the editor acc
 
 ## Releasing
 
-1. Update `version` in `blueprints.yaml` and move the *Unreleased* entries in `CHANGELOG.md` under the new version (Grav's GPM reads the `# vX.Y.Z` headings).
-2. Make sure `composer test` passes and the screenshots are current.
-3. Tag `vX.Y.Z` on `main` and create a GitHub release. The release ZIP must unpack into a folder named `supertext-translation`.
-4. To list the plugin in GPM later, follow the plugin submission instructions in the Grav documentation (<https://learn.getgrav.org>).
+Releases are published by `.github/workflows/release.yml` when the version is officially bumped; nobody tags or creates releases by hand.
 
+1. Check that `composer test` passes and the screenshots are current.
+2. Move the *Unreleased* entries in `CHANGELOG.md` under a new `## X.Y.Z — YYYY-MM-DD` section, and keep an empty *Unreleased* above it.
+3. Set the same version in:
+   - `blueprints.yaml`: `version`, shown in the admin's plugin list
+4. Push to `main`. The workflow checks that the version files match `CHANGELOG.md`, then tags `vX.Y.Z` and creates the GitHub release with the CHANGELOG section as notes (0.x versions as pre-releases). A push that adds no new version does nothing, and a version that is already released is skipped. After fixing a failed run, start it again with *Run workflow* on the *Release* workflow.
+
+The release attaches `supertext-translation-X.Y.Z.zip`, which unpacks into a folder named `supertext-translation`.
+To list the plugin in GPM later, follow the plugin submission instructions in the Grav documentation (<https://learn.getgrav.org>).
 ## Roadmap / known limitations
 
 - Translating a whole page tree or several pages at once (a "bulk translate" page in Admin2).
