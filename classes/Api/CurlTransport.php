@@ -9,7 +9,7 @@ final class CurlTransport implements Transport
     public function send(string $method, string $url, array $headers = [], ?string $body = null, int $timeout = 30): array
     {
         if (!function_exists('curl_init')) {
-            throw new SupertextException('The PHP curl extension is required to reach Supertext.');
+            throw SupertextException::because('no_curl', 'The PHP curl extension is required to reach Supertext.');
         }
         $responseHeaders = [];
         $handle = curl_init($url);
@@ -38,7 +38,7 @@ final class CurlTransport implements Transport
         $result = curl_exec($handle);
         if ($result === false) {
             $error = curl_error($handle);
-            throw new SupertextException('Could not reach Supertext: ' . $error);
+            throw SupertextException::because('unreachable', 'Could not reach Supertext: %s', [$error]);
         }
         $status = (int)curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
 

@@ -26,96 +26,96 @@ form:
   fields:
     enabled:
       type: toggle
-      label: Plugin status
+      label: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.PLUGIN_STATUS
       highlight: 1
       default: 1
       options:
-        1: Enabled
-        0: Disabled
+        1: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.ENABLED
+        0: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.DISABLED
       validate:
         type: bool
 
     connection:
       type: section
-      title: Supertext account
+      title: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.SECTION_ACCOUNT
       underline: true
 
     api_key:
       type: password
-      label: API key
+      label: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.API_KEY
       autocomplete: off
-      help: Your Supertext API key. You can paste it with or without the "Supertext-Auth-Key" prefix. Leave empty to use the SUPERTEXT_API_KEY environment variable.
+      help: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.API_KEY_HELP
       markdown: true
-      description: 'No Supertext account yet? <a href="https://www.supertext.com/person/en/account/signin" target="_blank" rel="noopener noreferrer">Create one at supertext.com</a>. Generate your API key at <a href="https://www.supertext.com/en/integrations/api" target="_blank" rel="noopener noreferrer">supertext.com → Integrations → API</a> (requires the Admin role).'
+      description: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.API_KEY_DESCRIPTION
       validate:
         max: 1024
 
     api_url:
       type: text
-      label: API endpoint
+      label: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.API_URL
       default: 'https://api.supertext.com/v1/'
-      help: Only change this if Supertext gives you a different endpoint.
+      help: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.API_URL_HELP
 
     languages_section:
       type: section
-      title: Languages
+      title: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.SECTION_LANGUAGES
       underline: true
 
     source_language:
       type: text
-      label: Source language
-      placeholder: Site default language
-      help: Grav language code the translations are made from, e.g. "en". Empty means the site's default language.
+      label: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.SOURCE_LANGUAGE
+      placeholder: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.SOURCE_LANGUAGE_PLACEHOLDER
+      help: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.SOURCE_LANGUAGE_HELP
 
     language_codes:
       type: array
-      label: Supertext language codes
-      placeholder_key: Grav code, e.g. de
-      placeholder_value: Supertext code, e.g. de-CH
-      help: Which language variant Supertext translates into. Without an entry, the Grav code is used as it is.
+      label: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.LANGUAGE_CODES
+      placeholder_key: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.LANGUAGE_CODES_KEY
+      placeholder_value: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.LANGUAGE_CODES_VALUE
+      help: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.LANGUAGE_CODES_HELP
 
     politeness:
       type: select
-      label: Form of address
+      label: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.POLITENESS
       default: default
       options:
-        default: Supertext default
-        more: Formal (Sie, vous)
-        less: Informal (du, tu)
-      help: Only applies to languages that distinguish formal and informal address.
+        default: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.POLITENESS_DEFAULT
+        more: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.POLITENESS_MORE
+        less: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.POLITENESS_LESS
+      help: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.POLITENESS_HELP
 
     content_section:
       type: section
-      title: What is translated
+      title: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.SECTION_CONTENT
       underline: true
 
     header_fields:
       type: selectize
-      label: Front matter fields
+      label: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.HEADER_FIELDS
       default: [title, menu, metadata.description]
-      help: Front matter fields translated together with the page content. Use dots for nested fields, e.g. metadata.description.
+      help: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.HEADER_FIELDS_HELP
       validate:
         type: commalist
 
     publish_new_translations:
       type: toggle
-      label: Publish new translations
+      label: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.PUBLISH
       default: 0
       highlight: 0
       options:
-        1: Publish right away
-        0: Create unpublished for review
+        1: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.PUBLISH_YES
+        0: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.PUBLISH_NO
       validate:
         type: bool
 
     advanced_section:
       type: section
-      title: Advanced
+      title: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.SECTION_ADVANCED
       underline: true
 
     poll_interval:
       type: number
-      label: Status check interval (seconds)
+      label: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.POLL_INTERVAL
       default: 2
       validate:
         type: int
@@ -124,7 +124,7 @@ form:
 
     poll_timeout:
       type: number
-      label: Maximum wait (seconds)
+      label: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.POLL_TIMEOUT
       default: 300
       validate:
         type: int

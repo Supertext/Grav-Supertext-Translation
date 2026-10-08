@@ -6,6 +6,7 @@ namespace Grav\Plugin;
 
 use Grav\Common\Plugin;
 use Grav\Plugin\SupertextTranslation\Controller\TranslationController;
+use Grav\Plugin\SupertextTranslation\Messages;
 use RocketTheme\Toolbox\Event\Event;
 
 spl_autoload_register(static function (string $class): void {
@@ -47,7 +48,7 @@ class SupertextTranslationPlugin extends Plugin
         $panels[] = [
             'id' => 'supertext-translation',
             'plugin' => 'supertext-translation',
-            'label' => 'Supertext translation',
+            'label' => Messages::forUser($this->grav, $event['user'] ?? null)->text('PANEL_LABEL', [], 'Supertext translation'),
             'icon' => 'languages',
             'contexts' => ['pages'],
             'priority' => 5,

@@ -107,6 +107,7 @@ final class SupertextClientTest extends TestCase
         self::assertIsString($result['de']);
         self::assertInstanceOf(SupertextException::class, $result['fr']);
         self::assertStringContainsString('limit is exceeded', $result['fr']->getMessage());
+        self::assertSame('limit_exceeded', $result['fr']->reason);
         self::assertSame([], $api->files, 'failed files are deleted too');
     }
 }

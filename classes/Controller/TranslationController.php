@@ -12,6 +12,7 @@ use Grav\Plugin\Api\Exceptions\ValidationException;
 use Grav\Plugin\Api\Response\ApiResponse;
 use Grav\Plugin\SupertextTranslation\Api\SupertextClient;
 use Grav\Plugin\SupertextTranslation\Api\SupertextException;
+use Grav\Plugin\SupertextTranslation\Messages;
 use Grav\Plugin\SupertextTranslation\PageTranslator;
 use Grav\Plugin\SupertextTranslation\Settings;
 use Psr\Http\Message\ResponseInterface;
@@ -29,11 +30,13 @@ final class TranslationController extends AbstractApiController
 {
     private const PERMISSION = 'api.pages.write';
 
+    private ?Messages $supertextMessages = null;
+
     public function status(ServerRequestInterface $request): ResponseInterface
     {
         $page = $this->page($request, (string)($request->getQueryParams()['route'] ?? ''));
         $settings = $this->settings();
-        [$source, $targets] = $this->languages($settings);
+        [$source, $targets] = $this->languages($request, $settings);
 
         $status = $this->translator($settings)->status($page->path() ?? '', $page->template(), $source, $targets);
         $languages = [];
@@ -61,18 +64,19 @@ final class TranslationController extends AbstractApiController
         $body = $this->getRequestBody($request);
         $page = $this->page($request, (string)($body['route'] ?? ''));
         $settings = $this->settings();
-        [$source, $targets] = $this->languages($settings);
+        [$source, $targets] = $this->languages($request, $settings);
+        $messages = $this->messages($request);
 
         $requested = array_values(array_unique(array_map('strval', (array)($body['languages'] ?? []))));
         $unknown = array_diff($requested, $targets);
         if ($requested === [] || $unknown !== []) {
             throw new ValidationException($requested === []
-                ? 'Choose at least one language.'
-                : 'Not a language of this site: ' . implode(', ', $unknown));
+                ? $messages->text('ERRORS.CHOOSE_LANGUAGE', [], 'Choose at least one language.')
+                : $messages->text('ERRORS.UNKNOWN_LANGUAGES', [implode(', ', $unknown)], 'Not a language of this site: ' . implode(', ', $unknown)));
         }
         $requested = array_values(array_diff($requested, [$source]));
         if ($settings->apiKey === '') {
-            throw new ValidationException('No Supertext API key is configured. An administrator can add it in the Supertext Translation plugin settings; generate it at https://www.supertext.com/en/integrations/api (requires the Admin role).');
+            throw new ValidationException($messages->reason('no_api_key', [], '', 'No Supertext API key is configured. An administrator can add it in the plugin settings. No Supertext account yet? Create one at https://www.supertext.com/person/en/account/signin. Generate your API key at https://www.supertext.com/en/integrations/api (requires the Admin role).'));
         }
 
         @set_time_limit($settings->pollTimeout + 120);
@@ -85,17 +89,21 @@ final class TranslationController extends AbstractApiController
                 filter_var($body['overwrite'] ?? false, FILTER_VALIDATE_BOOLEAN),
             );
         } catch (SupertextException $e) {
-            throw new ValidationException($e->getMessage());
+            throw new ValidationException($messages->error($e));
         }
 
         $written = false;
         $out = [];
         foreach ($results as $code => $result) {
             $written = $written || in_array($result['result'], ['created', 'updated'], true);
-            $out[] = $result + ['code' => $code, 'name' => $this->languageName($code)];
             if ($result['result'] === 'error') {
                 $this->grav['log']->warning(sprintf('Supertext: translating %s into %s failed: %s', $page->rawRoute(), $code, $result['message']));
             }
+            if (($result['reason'] ?? '') !== '') {
+                $result['message'] = $messages->reason($result['reason'], $result['args'] ?? [], $result['detail'] ?? '', $result['message']);
+            }
+            unset($result['reason'], $result['args'], $result['detail']);
+            $out[] = $result + ['code' => $code, 'name' => $this->languageName($code)];
         }
         if ($written) {
             $this->clearCache();
@@ -113,11 +121,11 @@ final class TranslationController extends AbstractApiController
     {
         $route = '/' . trim($route, '/');
         if ($route === '/') {
-            throw new ValidationException('The page route is missing.');
+            throw new ValidationException($this->messages($request)->text('ERRORS.ROUTE_MISSING', [], 'The page route is missing.'));
         }
         $page = $this->resolvePageByRoute($route);
         if (!$page instanceof PageInterface || !$page->path()) {
-            throw new NotFoundException('Page not found: ' . $route);
+            throw new NotFoundException($this->messages($request)->text('ERRORS.PAGE_NOT_FOUND', [$route], 'Page not found: ' . $route));
         }
         $this->authorizePageAction($request, $page, 'update', self::PERMISSION);
         return $page;
@@ -135,17 +143,31 @@ final class TranslationController extends AbstractApiController
     }
 
     /** @return array{0: string, 1: list<string>} source language and all site languages */
-    private function languages(Settings $settings): array
+    private function languages(ServerRequestInterface $request, Settings $settings): array
     {
         $language = $this->grav['language'];
         $all = array_values(array_map('strval', (array)$language->getLanguages()));
         if (count($all) < 2) {
-            throw new ValidationException('This site has only one language. Add languages under Configuration → System → Languages first.');
+            throw new ValidationException($this->messages($request)->text('ERRORS.ONE_LANGUAGE', [], 'This site has only one language. Add languages under Configuration → System → Languages first.'));
         }
         $source = $settings->sourceLanguage !== '' && in_array($settings->sourceLanguage, $all, true)
             ? $settings->sourceLanguage
             : (string)($language->getDefault() ?: $all[0]);
         return [$source, $all];
+    }
+
+    private function messages(ServerRequestInterface $request): Messages
+    {
+        if ($this->supertextMessages === null) {
+            try {
+                $user = $this->getUser($request);
+            } catch (\Throwable) {
+                $user = null;
+            }
+            $this->supertextMessages = Messages::forUser($this->grav, $user);
+        }
+
+        return $this->supertextMessages;
     }
 
     private function translator(Settings $settings): PageTranslator

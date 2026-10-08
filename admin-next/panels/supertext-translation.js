@@ -8,27 +8,81 @@
  */
 const TAG = window.__GRAV_PANEL_TAG || 'grav-supertext-translation--panel';
 
+// Strings: ICU.PLUGIN_SUPERTEXT_TRANSLATION.PANEL.* in languages.yaml (en, de, fr, it), read
+// through Admin2's window.__GRAV_I18N in the user's admin language. EN is the fallback for an
+// Admin2 without it and must match the English strings in languages.yaml (tests/LanguagesTest.php).
+const KEY_PREFIX = 'PLUGIN_SUPERTEXT_TRANSLATION.PANEL.';
+const EN = {
+    TITLE: 'Supertext translation',
+    CLOSE: 'Close',
+    LOADING: 'Loading…',
+    HTTP_ERROR: 'The server answered with HTTP {status}.',
+    STATE_MISSING: 'Not translated yet',
+    STATE_CURRENT: 'Up to date',
+    STATE_OUTDATED: 'Source changed since',
+    STATE_EDITED: 'Edited after translation',
+    STATE_MANUAL: 'Exists, not from Supertext',
+    FIELD_TITLE: 'title',
+    FIELD_MENU: 'menu label',
+    FIELD_META_DESCRIPTION: 'meta description',
+    FIELD_META_KEYWORDS: 'meta keywords',
+    FIELD_SUMMARY: 'summary',
+    RESULT_LINE: '{name}: {result}',
+    RESULT_CREATED: 'translation created',
+    RESULT_UPDATED: 'translation updated',
+    RESULT_SKIPPED: 'kept as it is',
+    RESULT_ERROR: 'not translated',
+    INTRO: 'Translate {title} from {source} into:',
+    NO_API_KEY: 'No Supertext API key is configured yet. An administrator can add it under Plugins → Supertext Translation. No Supertext account yet? {signup}. Generate the API key at {apikey} (requires the Admin role).',
+    SIGNUP_LINK: 'Create one at supertext.com',
+    NO_LANGUAGES: 'This site has no other languages. Add languages in the system configuration first.',
+    CONFIRM_TITLE_ONE: 'Replace existing translation?',
+    CONFIRM_TITLE_MANY: 'Replace existing translations?',
+    CONFIRM_EDITED: '{name} was edited after it was translated.',
+    CONFIRM_MANUAL: '{name} already exists and was not made with Supertext.',
+    CONFIRM_TEXT: 'Translating again replaces that text with a new translation of the {source} page.',
+    REPLACE: 'Replace',
+    CANCEL: 'Cancel',
+    TRANSLATE: 'Translate',
+    TRANSLATE_ONE: 'Translate into 1 language',
+    TRANSLATE_MANY: 'Translate into {count} languages',
+    TRANSLATING: 'Translating…',
+    BUSY_HINT: 'Supertext is translating the page. This usually takes 10 to 60 seconds; you can keep editing in the meantime.',
+    REVIEW_HINT: 'New translations are saved unpublished unless your administrator changed that. Switch the editor to the language to review and publish them.',
+    FOOT: 'Supertext translates the page content.',
+    FOOT_FIELDS: 'Supertext translates the page content and these fields: {fields}.',
+    FOOT_KEPT: 'Translations edited by hand are never replaced without asking.',
+};
+
+function t(key, params) {
+    const i18n = window.__GRAV_I18N;
+    if (i18n && typeof i18n.has === 'function' && i18n.has(KEY_PREFIX + key)) {
+        return i18n.t(KEY_PREFIX + key, params);
+    }
+    return String(EN[key] ?? key).replace(/\{(\w+)\}/g, (match, name) => (params && name in params ? String(params[name]) : match));
+}
+
 const STATE_LABELS = {
-    missing: { text: 'Not translated yet', tone: 'muted' },
-    current: { text: 'Up to date', tone: 'ok' },
-    outdated: { text: 'Source changed since', tone: 'info' },
-    edited: { text: 'Edited after translation', tone: 'warn' },
-    manual: { text: 'Exists, not from Supertext', tone: 'warn' },
+    missing: { key: 'STATE_MISSING', tone: 'muted' },
+    current: { key: 'STATE_CURRENT', tone: 'ok' },
+    outdated: { key: 'STATE_OUTDATED', tone: 'info' },
+    edited: { key: 'STATE_EDITED', tone: 'warn' },
+    manual: { key: 'STATE_MANUAL', tone: 'warn' },
 };
 
 const FIELD_LABELS = {
-    title: 'title',
-    menu: 'menu label',
-    'metadata.description': 'meta description',
-    'metadata.keywords': 'meta keywords',
-    summary: 'summary',
+    title: 'FIELD_TITLE',
+    menu: 'FIELD_MENU',
+    'metadata.description': 'FIELD_META_DESCRIPTION',
+    'metadata.keywords': 'FIELD_META_KEYWORDS',
+    summary: 'FIELD_SUMMARY',
 };
 
 const RESULT_TEXT = {
-    created: 'translation created',
-    updated: 'translation updated',
-    skipped: 'kept as it is',
-    error: 'not translated',
+    created: 'RESULT_CREATED',
+    updated: 'RESULT_UPDATED',
+    skipped: 'RESULT_SKIPPED',
+    error: 'RESULT_ERROR',
 };
 
 class SupertextTranslationPanel extends HTMLElement {
@@ -46,8 +100,19 @@ class SupertextTranslationPanel extends HTMLElement {
     }
 
     connectedCallback() {
+        const i18n = window.__GRAV_I18N;
+        if (i18n && typeof i18n.subscribe === 'function' && !this._unsubscribe) {
+            // Re-render when the user switches the admin language.
+            const unsubscribe = i18n.subscribe(() => this._render());
+            this._unsubscribe = typeof unsubscribe === 'function' ? unsubscribe : null;
+        }
         this._render();
         this._load();
+    }
+
+    disconnectedCallback() {
+        if (this._unsubscribe) this._unsubscribe();
+        this._unsubscribe = null;
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -81,7 +146,7 @@ class SupertextTranslationPanel extends HTMLElement {
         try { json = await response.json(); } catch (e) { /* not JSON */ }
         if (!response.ok) {
             const detail = json && (json.detail || json.message || json.title);
-            throw new Error(detail || `The server answered with HTTP ${response.status}.`);
+            throw new Error(detail || t('HTTP_ERROR', { status: response.status }));
         }
         return json && json.data !== undefined ? json.data : json;
     }
@@ -148,7 +213,22 @@ class SupertextTranslationPanel extends HTMLElement {
     _date(iso) {
         if (!iso) return '';
         const d = new Date(iso);
-        return isNaN(d) ? '' : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+        const locale = (window.__GRAV_I18N && window.__GRAV_I18N.locale) || undefined;
+        try {
+            return isNaN(d) ? '' : d.toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' });
+        } catch (e) {
+            return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+        }
+    }
+
+    /** A translated string as HTML: `params` are text, `html` are inserted as markup. */
+    _html(key, params = {}, html = {}) {
+        const all = { ...params };
+        const names = Object.keys(html);
+        names.forEach((name, i) => { all[name] = `\u0001${i}\u0001`; });
+        let out = this._esc(t(key, all));
+        names.forEach((name, i) => { out = out.split(`\u0001${i}\u0001`).join(html[name]); });
+        return out;
     }
 
     _render() {
@@ -160,28 +240,29 @@ class SupertextTranslationPanel extends HTMLElement {
         }
 
         if (!s && !this._error) {
-            body += `<p class="st-muted">Loading…</p>`;
+            body += `<p class="st-muted">${this._esc(t('LOADING'))}</p>`;
         }
 
         if (s) {
-            body += `<p class="st-intro">Translate <strong>${this._esc(s.title)}</strong> from
-                <strong>${this._esc(s.source.name)}</strong> into:</p>`;
+            body += `<p class="st-intro">${this._html('INTRO', {}, {
+                title: `<strong>${this._esc(s.title)}</strong>`,
+                source: `<strong>${this._esc(s.source.name)}</strong>`,
+            })}</p>`;
 
             if (!s.api_key_configured) {
-                body += `<div class="st-box st-warn">No Supertext API key is configured yet. An administrator
-                    can add it under Plugins → Supertext Translation. No Supertext account yet?
-                    <a href="https://www.supertext.com/person/en/account/signin" target="_blank" rel="noopener noreferrer">Create one at supertext.com</a>.
-                    Generate the API key at <a href="https://www.supertext.com/en/integrations/api" target="_blank" rel="noopener noreferrer">supertext.com → Integrations → API</a>
-                    (requires the Admin role).</div>`;
+                body += `<div class="st-box st-warn">${this._html('NO_API_KEY', {}, {
+                    signup: `<a href="https://www.supertext.com/person/en/account/signin" target="_blank" rel="noopener noreferrer">${this._esc(t('SIGNUP_LINK'))}</a>`,
+                    apikey: '<a href="https://www.supertext.com/en/integrations/api" target="_blank" rel="noopener noreferrer">supertext.com → Integrations → API</a>',
+                })}</div>`;
             }
             if (!s.languages.length) {
-                body += `<div class="st-box st-info">This site has no other languages. Add languages in the
-                    system configuration first.</div>`;
+                body += `<div class="st-box st-info">${this._esc(t('NO_LANGUAGES'))}</div>`;
             }
 
             body += '<ul class="st-langs">';
             for (const l of s.languages) {
-                const label = STATE_LABELS[l.state] || { text: l.state, tone: 'muted' };
+                const state = STATE_LABELS[l.state];
+                const label = state ? { text: t(state.key), tone: state.tone } : { text: l.state, tone: 'muted' };
                 const when = l.translated && l.state !== 'manual' ? ` · ${this._esc(this._date(l.translated))}` : '';
                 body += `<li>
                     <label class="st-lang">
@@ -194,28 +275,28 @@ class SupertextTranslationPanel extends HTMLElement {
             body += '</ul>';
 
             if (this._confirm) {
-                const lines = this._confirm.map((l) => l.state === 'edited'
-                    ? `<li><strong>${this._esc(l.name)}</strong> was edited after it was translated.</li>`
-                    : `<li><strong>${this._esc(l.name)}</strong> already exists and was not made with Supertext.</li>`).join('');
+                const lines = this._confirm.map((l) => `<li>${this._html(
+                    l.state === 'edited' ? 'CONFIRM_EDITED' : 'CONFIRM_MANUAL', {}, { name: `<strong>${this._esc(l.name)}</strong>` },
+                )}</li>`).join('');
                 body += `<div class="st-box st-warn" role="alert">
-                    <strong>Replace existing ${this._confirm.length > 1 ? 'translations' : 'translation'}?</strong>
+                    <strong>${this._esc(t(this._confirm.length > 1 ? 'CONFIRM_TITLE_MANY' : 'CONFIRM_TITLE_ONE'))}</strong>
                     <ul class="st-confirm">${lines}</ul>
-                    <p>Translating again replaces that text with a new translation of the ${this._esc(s.source.name)} page.</p>
+                    <p>${this._esc(t('CONFIRM_TEXT', { source: s.source.name }))}</p>
                     <div class="st-actions">
-                        <button type="button" class="st-btn st-danger" data-action="overwrite">Replace</button>
-                        <button type="button" class="st-btn" data-action="cancel">Cancel</button>
+                        <button type="button" class="st-btn st-danger" data-action="overwrite">${this._esc(t('REPLACE'))}</button>
+                        <button type="button" class="st-btn" data-action="cancel">${this._esc(t('CANCEL'))}</button>
                     </div>
                 </div>`;
             } else {
                 const n = this._selected.size;
+                const label = n === 0 ? t('TRANSLATE') : n === 1 ? t('TRANSLATE_ONE') : t('TRANSLATE_MANY', { count: n });
                 body += `<div class="st-actions">
                     <button type="button" class="st-btn st-primary" data-action="translate" ${n && !this._busy && s.api_key_configured ? '' : 'disabled'}>
-                        ${this._busy ? '<span class="st-spinner" aria-hidden="true"></span> Translating…' : `Translate${n ? ` into ${n} language${n > 1 ? 's' : ''}` : ''}`}
+                        ${this._busy ? `<span class="st-spinner" aria-hidden="true"></span> ${this._esc(t('TRANSLATING'))}` : this._esc(label)}
                     </button>
                 </div>`;
                 if (this._busy) {
-                    body += `<p class="st-muted">Supertext is translating the page. This usually takes
-                        10 to 60 seconds; you can keep editing in the meantime.</p>`;
+                    body += `<p class="st-muted">${this._esc(t('BUSY_HINT'))}</p>`;
                 }
             }
 
@@ -223,18 +304,18 @@ class SupertextTranslationPanel extends HTMLElement {
                 body += '<ul class="st-results">';
                 for (const r of this._results) {
                     const tone = r.result === 'error' ? 'error' : r.result === 'skipped' ? 'warn' : 'ok';
-                    body += `<li class="st-${tone}"><strong>${this._esc(r.name)}:</strong> ${this._esc(RESULT_TEXT[r.result] || r.result)}${r.message ? ` — ${this._esc(r.message)}` : ''}</li>`;
+                    const text = RESULT_TEXT[r.result] ? t(RESULT_TEXT[r.result]) : r.result;
+                    body += `<li class="st-${tone}">${this._html('RESULT_LINE', { result: text }, { name: `<strong>${this._esc(r.name)}</strong>` })}${r.message ? ` — ${this._esc(r.message)}` : ''}</li>`;
                 }
                 body += '</ul>';
                 if (this._results.some((r) => r.result === 'created')) {
-                    body += `<p class="st-muted">New translations are saved unpublished unless your administrator
-                        changed that. Switch the editor to the language to review and publish them.</p>`;
+                    body += `<p class="st-muted">${this._esc(t('REVIEW_HINT'))}</p>`;
                 }
             }
 
-            const fields = (s.translated_fields || []).map((f) => FIELD_LABELS[f] || f).join(', ');
-            body += `<p class="st-foot">Supertext translates the page content${fields ? ` and these fields: ${this._esc(fields)}` : ''}.
-                Translations edited by hand are never replaced without asking.</p>`;
+            const fields = (s.translated_fields || []).map((f) => (FIELD_LABELS[f] ? t(FIELD_LABELS[f]) : f)).join(', ');
+            body += `<p class="st-foot">${this._esc(fields ? t('FOOT_FIELDS', { fields }) : t('FOOT'))}
+                ${this._esc(t('FOOT_KEPT'))}</p>`;
         }
 
         this.innerHTML = `
@@ -272,8 +353,8 @@ class SupertextTranslationPanel extends HTMLElement {
                 @keyframes st-spin { to { transform: rotate(360deg); } }
             </style>
             <div class="st-head">
-                <h2>Supertext translation</h2>
-                <button type="button" class="st-close" data-action="close" aria-label="Close">×</button>
+                <h2>${this._esc(t('TITLE'))}</h2>
+                <button type="button" class="st-close" data-action="close" aria-label="${this._esc(t('CLOSE'))}">×</button>
             </div>
             <div class="st-body">${body}</div>`;
 

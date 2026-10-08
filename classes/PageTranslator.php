@@ -70,14 +70,14 @@ final class PageTranslator
 
     /**
      * @param list<string> $targets Grav language codes
-     * @return array<string, array{result: string, state: string, message: string, file: string}>
+     * @return array<string, array{result: string, state: string, message: string, file: string, reason?: string, args?: list<string|int>, detail?: string}>
      *   result: created | updated | skipped | error
      */
     public function translate(string $folder, string $template, string $source, array $targets, bool $overwrite = false): array
     {
         $sourceFile = $this->sourceFile($folder, $template, $source);
         if ($sourceFile === null) {
-            throw new SupertextException(sprintf('This page has no %s version to translate from.', strtoupper($source)));
+            throw SupertextException::because('no_source', 'This page has no %s version to translate from.', [strtoupper($source)]);
         }
         $sourcePage = PageFile::read($sourceFile);
         $sourceHash = $this->fingerprint($sourcePage);
@@ -98,7 +98,7 @@ final class PageTranslator
             $segments[] = ['html' => $segment['html'], 'tag' => $segment['tag']];
         }
         if ($segments === []) {
-            throw new SupertextException('This page has no text to translate.');
+            throw SupertextException::because('no_text', 'This page has no text to translate.');
         }
         $html = HtmlDocument::build($segments, $source);
 
@@ -118,6 +118,7 @@ final class PageTranslator
                     'message' => $state === self::STATE_EDITED
                         ? 'The translation was edited after it was translated. It was kept; confirm to replace it.'
                         : 'A translation already exists that was not made with Supertext. It was kept; confirm to replace it.',
+                    'reason' => $state === self::STATE_EDITED ? 'kept_edited' : 'kept_manual',
                 ];
                 continue;
             }
@@ -133,7 +134,7 @@ final class PageTranslator
         foreach ($this->client->translateMany($jobs) as $lang => $translated) {
             $file = $this->targetFile($folder, $template, $lang);
             if ($translated instanceof SupertextException) {
-                $results[$lang] = ['result' => 'error', 'state' => $results[$lang]['state'], 'file' => basename($file), 'message' => $translated->getMessage()];
+                $results[$lang] = ['result' => 'error', 'state' => $results[$lang]['state'], 'file' => basename($file)] + self::error($translated);
                 continue;
             }
             try {
@@ -148,13 +149,28 @@ final class PageTranslator
                     'message' => count($parsed) < count($segments)
                         ? sprintf('%d of %d text blocks came back untranslated and were kept in the source language.', count($segments) - count($parsed), count($segments))
                         : '',
-                ];
+                ] + (count($parsed) < count($segments) ? ['reason' => 'partly_untranslated', 'args' => [count($segments) - count($parsed), count($segments)]] : []);
             } catch (\Throwable $e) {
-                $results[$lang] = ['result' => 'error', 'state' => $results[$lang]['state'], 'file' => basename($file), 'message' => $e->getMessage()];
+                $results[$lang] = ['result' => 'error', 'state' => $results[$lang]['state'], 'file' => basename($file)] + self::error($e);
             }
         }
 
         return $results;
+    }
+
+    /**
+     * The English message of an error, plus its reason, args and detail when it has one,
+     * so the admin can show it in the user's language.
+     *
+     * @return array{message: string, reason?: string, args?: list<string|int>, detail?: string}
+     */
+    private static function error(\Throwable $e): array
+    {
+        if ($e instanceof SupertextException && $e->reason !== '') {
+            return ['message' => $e->getMessage(), 'reason' => $e->reason, 'args' => $e->args, 'detail' => $e->detail];
+        }
+
+        return ['message' => $e->getMessage()];
     }
 
     /**

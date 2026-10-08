@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- French and Italian interface, and German, which was missing: the panel, the settings and the messages from Supertext now follow the user's admin language. The "no API key" and "API key refused" messages now also link to Supertext account sign-up.
+
 ## 0.1.0 — 2026-10-07
 
 ### Added

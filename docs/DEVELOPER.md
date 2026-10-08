@@ -15,6 +15,17 @@ Grav 2 replaced its classic admin with **Admin2**, a single-page app that talks 
 | Markdown | `classes/Markdown/MarkdownDocument.php`, `InlineConverter.php` | Splits the Markdown body into blocks and back; converts inline Markdown to HTML and back. |
 | Supertext client | `classes/Api/SupertextClient.php`, `HtmlDocument.php`, `CurlTransport.php` | Protocol, retries, HTML packing. |
 | Settings | `classes/Settings.php`, `blueprints.yaml`, `supertext-translation.yaml` | Settings with defaults, the Admin2 form, defaults file. |
+| Strings | `languages.yaml`, `classes/Messages.php` | All UI strings in English, German, French and Italian (see *Interface languages* below). `Messages` resolves the admin user's language (the API plugin's `PreferencesResolver`, as its own controllers do) and translates the panel label and the API's messages. |
+
+### Interface languages
+
+Everything the plugin shows is in `languages.yaml`, in `en`, `de`, `fr` and `it`:
+
+- `PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.*`: the settings form. `blueprints.yaml` holds only these keys; Admin2 translates them into the user's admin language.
+- `PLUGIN_SUPERTEXT_TRANSLATION.PANEL_LABEL` and `PLUGIN_SUPERTEXT_TRANSLATION.ERRORS.*`: the panel's toolbar label and the messages of the API routes (Grav strings, `%s`/`%d` placeholders). The Supertext client and `PageTranslator` stay free of Grav: they throw `SupertextException` (or return results) with an English message and a `reason` (e.g. `limit_exceeded`, args, detail), and `Messages` shows `ERRORS.<REASON>` instead.
+- `ICU.PLUGIN_SUPERTEXT_TRANSLATION.PANEL.*`: the panel, read with Admin2's `window.__GRAV_I18N.t()` (ICU MessageFormat, `{name}` placeholders; use `’`, not `'`, in these strings). The panel script keeps the English strings as `EN` for an Admin2 without `__GRAV_I18N`.
+
+New or changed strings need all four languages in the same commit, with formal address (Sie, vous, Lei) and Grav's own terms. `tests/LanguagesTest.php` checks that all languages have the same keys and placeholders, that every key used by `blueprints.yaml`, the panel and the PHP code exists, and that the panel's `EN` matches the English strings.
 
 ### Files and states
 
@@ -105,6 +116,7 @@ SUPERTEXT_API_KEY=stand-in SUPERTEXT_API_URL=http://127.0.0.1:8089/v1/ php -S 12
 - `MarkdownTest`: block splitting, round trips, formatting mapping, protected tokens, escaping.
 - `SupertextClientTest`: protocol order, multipart fields, auth header, 429 retries, error messages, per-language failures, cleanup.
 - `PageTranslatorTest`: creating, states (missing/current/outdated/edited/manual), keeping published state, overwrite protection, settings.
+- `LanguagesTest`: `languages.yaml` complete in English, German, French and Italian, and every key used by the settings, the panel and the PHP code present.
 
 Also checked by hand (and by the screenshot script) in a real Grav 2.2.4 with Admin2: the panel loads, the editor account can translate, a save in Admin2 of an unchanged translation keeps it *current*, an edit makes it *edited*.
 

@@ -150,6 +150,7 @@ final class PageTranslatorTest extends TestCase
         self::assertSame('created', $result['de']['result']);
         self::assertSame('error', $result['fr']['result']);
         self::assertStringContainsString('could not translate', $result['fr']['message']);
+        self::assertSame('translation_failed', $result['fr']['reason']);
         self::assertFileDoesNotExist($this->folder . '/default.fr.md');
     }
 

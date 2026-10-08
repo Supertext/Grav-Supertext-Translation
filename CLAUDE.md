@@ -23,6 +23,10 @@ Everywhere an administrator enters or is told about the API key — the settings
 
 Wording: "No Supertext account yet? Create one at supertext.com. Generate your API key at supertext.com → Integrations → API (requires the Admin role)." In the UI, links open in a new tab (`target="_blank" rel="noopener"`); where the CMS shows plain text only, use the bare URLs. New screens or messages that mention the key get the links too.
 
+## UI languages (always)
+
+The plugin's own UI (buttons, panels, dialogs, settings, permissions, messages) is available in English, German, French and Italian through the CMS's own translation mechanism, so it follows the user's back-end language. New or changed strings get all four languages in the same commit. Formal address (Sie, vous, Lei), the CMS's own terms in each language, "Supertext", placeholders and URLs never translated.
+
 ## Plugin list (always)
 
 `README.md` ends with the shared list of all Supertext plugins (between the `<!-- supertext-plugins:start -->` and `<!-- supertext-plugins:end -->` markers). It is identical in every Supertext plugin repo: when a plugin is added, renamed or its description changes, update the list in **all** repos, not just this one.
@@ -78,5 +82,6 @@ Lessons from testing against the live API (October 2026), to apply in every plug
 
 - Grav 2 only: the UI is a context panel in **Admin2** (`admin-next/panels/supertext-translation.js`, registered via `onApiContextPanels`), backed by routes registered with `onApiRegisterRoutes`. Admin2 fires no `onAdmin*` editor events.
 - Page logic (`classes/PageTranslator.php`, `classes/Markdown/`) has no Grav dependency and is unit-tested; keep it that way.
+- UI strings live in `languages.yaml` (`en`, `de`, `fr`, `it`): flat `PLUGIN_SUPERTEXT_TRANSLATION.*` keys for the settings and PHP messages, `ICU.PLUGIN_SUPERTEXT_TRANSLATION.PANEL.*` for the panel (via `window.__GRAV_I18N`; keep its `EN` fallback in sync). See `docs/DEVELOPER.md` → Interface languages.
 - `composer test` before every commit; `composer docs:screenshots` when the panel, settings or demo content change.
 - Demo: `demo/` (Dockerfile built from the repo root, `entrypoint.sh`, `seed-accounts.php`, `configure.php`). Railway service `Grav` in the project `supertext-cms-demos-php`, https://grav-production.up.railway.app.

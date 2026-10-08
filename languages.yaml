@@ -1,3 +1,425 @@
+# Strings of the Supertext Translation plugin.
+#
+# PLUGIN_SUPERTEXT_TRANSLATION.*      Grav's flat strings: settings labels (blueprints.yaml) and the
+#                                    messages of the plugin's API (PHP, %s placeholders).
+# ICU.PLUGIN_SUPERTEXT_TRANSLATION.*  The page editor panel (admin-next/panels/supertext-translation.js),
+#                                    read through window.__GRAV_I18N; ICU MessageFormat ({name}).
+#
+# Every key exists in en, de, fr and it (tests/LanguagesTest.php). Formal address (Sie, vous, Lei).
+# Use ’ for apostrophes: a straight ' is a quote character in ICU MessageFormat.
 en:
   PLUGIN_SUPERTEXT_TRANSLATION:
-    PANEL_LABEL: 'Supertext translation'
+    PANEL_LABEL: Supertext translation
+    SETTINGS:
+      PLUGIN_STATUS: Plugin status
+      ENABLED: Enabled
+      DISABLED: Disabled
+      SECTION_ACCOUNT: Supertext account
+      API_KEY: API key
+      API_KEY_HELP: Your Supertext API key. You can paste it with or without the "Supertext-Auth-Key" prefix. Leave empty to use the SUPERTEXT_API_KEY environment variable.
+      API_KEY_DESCRIPTION: No Supertext account yet? <a href="https://www.supertext.com/person/en/account/signin" target="_blank" rel="noopener noreferrer">Create one at supertext.com</a>. Generate your API key at <a href="https://www.supertext.com/en/integrations/api" target="_blank" rel="noopener noreferrer">supertext.com → Integrations → API</a> (requires the Admin role).
+      API_URL: API endpoint
+      API_URL_HELP: Only change this if Supertext gives you a different endpoint.
+      SECTION_LANGUAGES: Languages
+      SOURCE_LANGUAGE: Source language
+      SOURCE_LANGUAGE_PLACEHOLDER: Site default language
+      SOURCE_LANGUAGE_HELP: Grav language code the translations are made from, e.g. "en". Empty means the site's default language.
+      LANGUAGE_CODES: Supertext language codes
+      LANGUAGE_CODES_HELP: Which language variant Supertext translates into. Without an entry, the Grav code is used as it is.
+      LANGUAGE_CODES_KEY: Grav code, e.g. de
+      LANGUAGE_CODES_VALUE: Supertext code, e.g. de-CH
+      POLITENESS: Form of address
+      POLITENESS_DEFAULT: Supertext default
+      POLITENESS_MORE: Formal (Sie, vous)
+      POLITENESS_LESS: Informal (du, tu)
+      POLITENESS_HELP: Only applies to languages that distinguish formal and informal address.
+      SECTION_CONTENT: What is translated
+      HEADER_FIELDS: Front matter fields
+      HEADER_FIELDS_HELP: Front matter fields translated together with the page content. Use dots for nested fields, e.g. metadata.description.
+      PUBLISH: Publish new translations
+      PUBLISH_YES: Publish right away
+      PUBLISH_NO: Create unpublished for review
+      SECTION_ADVANCED: Advanced
+      POLL_INTERVAL: Status check interval (seconds)
+      POLL_TIMEOUT: Maximum wait (seconds)
+    ERRORS:
+      CHOOSE_LANGUAGE: Choose at least one language.
+      UNKNOWN_LANGUAGES: 'Not a language of this site: %s'
+      ONE_LANGUAGE: This site has only one language. Add languages under Configuration → System → Languages first.
+      ROUTE_MISSING: The page route is missing.
+      PAGE_NOT_FOUND: 'Page not found: %s'
+      NO_API_KEY: No Supertext API key is configured. An administrator can add it in the plugin settings. No Supertext account yet? Create one at https://www.supertext.com/person/en/account/signin. Generate your API key at https://www.supertext.com/en/integrations/api (requires the Admin role).
+      AUTH_FAILED: Supertext refused the API key. Please check it in the plugin settings. No Supertext account yet? Create one at https://www.supertext.com/person/en/account/signin. Generate your API key at https://www.supertext.com/en/integrations/api (requires the Admin role).
+      NO_CURL: The PHP curl extension is required to reach Supertext.
+      UNREACHABLE: 'Could not reach Supertext: %s'
+      TOO_LONG: The page is too long to translate in one go.
+      TRANSLATION_FAILED: Supertext could not translate the page.
+      LIMIT_EXCEEDED: Your Supertext translation limit is exceeded.
+      DELETED: The file was deleted at Supertext before the translation could be downloaded.
+      EMPTY: Supertext returned an empty translation.
+      TIMEOUT: Supertext took too long to answer. Please try again.
+      NO_RESULT: No translation was returned.
+      NO_FILE_ID: Supertext did not accept the page (no file id returned).
+      NOT_FOUND: Supertext could not find the requested file.
+      RATE_LIMITED: Supertext is busy (too many requests). Please try again in a moment.
+      UNAVAILABLE: The Supertext service is currently unavailable. Please try again later.
+      HTTP_ERROR: Supertext answered with HTTP %d.
+      NO_SOURCE: This page has no %s version to translate from.
+      NO_TEXT: This page has no text to translate.
+      KEPT_EDITED: The translation was edited after it was translated. It was kept; confirm to replace it.
+      KEPT_MANUAL: A translation already exists that was not made with Supertext. It was kept; confirm to replace it.
+      PARTLY_UNTRANSLATED: '%d of %d text blocks came back untranslated and were kept in the source language.'
+  ICU:
+    PLUGIN_SUPERTEXT_TRANSLATION:
+      PANEL:
+        TITLE: Supertext translation
+        CLOSE: Close
+        LOADING: Loading…
+        HTTP_ERROR: The server answered with HTTP {status}.
+        STATE_MISSING: Not translated yet
+        STATE_CURRENT: Up to date
+        STATE_OUTDATED: Source changed since
+        STATE_EDITED: Edited after translation
+        STATE_MANUAL: Exists, not from Supertext
+        FIELD_TITLE: title
+        FIELD_MENU: menu label
+        FIELD_META_DESCRIPTION: meta description
+        FIELD_META_KEYWORDS: meta keywords
+        FIELD_SUMMARY: summary
+        RESULT_LINE: '{name}: {result}'
+        RESULT_CREATED: translation created
+        RESULT_UPDATED: translation updated
+        RESULT_SKIPPED: kept as it is
+        RESULT_ERROR: not translated
+        INTRO: 'Translate {title} from {source} into:'
+        NO_API_KEY: No Supertext API key is configured yet. An administrator can add it under Plugins → Supertext Translation. No Supertext account yet? {signup}. Generate the API key at {apikey} (requires the Admin role).
+        SIGNUP_LINK: Create one at supertext.com
+        NO_LANGUAGES: This site has no other languages. Add languages in the system configuration first.
+        CONFIRM_TITLE_ONE: Replace existing translation?
+        CONFIRM_TITLE_MANY: Replace existing translations?
+        CONFIRM_EDITED: '{name} was edited after it was translated.'
+        CONFIRM_MANUAL: '{name} already exists and was not made with Supertext.'
+        CONFIRM_TEXT: Translating again replaces that text with a new translation of the {source} page.
+        REPLACE: Replace
+        CANCEL: Cancel
+        TRANSLATE: Translate
+        TRANSLATE_ONE: Translate into 1 language
+        TRANSLATE_MANY: Translate into {count} languages
+        TRANSLATING: Translating…
+        BUSY_HINT: Supertext is translating the page. This usually takes 10 to 60 seconds; you can keep editing in the meantime.
+        REVIEW_HINT: New translations are saved unpublished unless your administrator changed that. Switch the editor to the language to review and publish them.
+        FOOT: Supertext translates the page content.
+        FOOT_FIELDS: 'Supertext translates the page content and these fields: {fields}.'
+        FOOT_KEPT: Translations edited by hand are never replaced without asking.
+de:
+  PLUGIN_SUPERTEXT_TRANSLATION:
+    PANEL_LABEL: Supertext-Übersetzung
+    SETTINGS:
+      PLUGIN_STATUS: Plugin-Status
+      ENABLED: Aktiviert
+      DISABLED: Deaktiviert
+      SECTION_ACCOUNT: Supertext-Konto
+      API_KEY: API-Schlüssel
+      API_KEY_HELP: Ihr Supertext-API-Schlüssel. Sie können ihn mit oder ohne das Präfix "Supertext-Auth-Key" einfügen. Leer lassen, um die Umgebungsvariable SUPERTEXT_API_KEY zu verwenden.
+      API_KEY_DESCRIPTION: Noch kein Supertext-Konto? <a href="https://www.supertext.com/person/en/account/signin" target="_blank" rel="noopener noreferrer">Erstellen Sie eines auf supertext.com</a>. Ihren API-Schlüssel erzeugen Sie unter <a href="https://www.supertext.com/en/integrations/api" target="_blank" rel="noopener noreferrer">supertext.com → Integrations → API</a> (erfordert die Admin-Rolle).
+      API_URL: API-Endpunkt
+      API_URL_HELP: Nur ändern, wenn Supertext Ihnen einen anderen Endpunkt nennt.
+      SECTION_LANGUAGES: Sprachen
+      SOURCE_LANGUAGE: Ausgangssprache
+      SOURCE_LANGUAGE_PLACEHOLDER: Standardsprache der Website
+      SOURCE_LANGUAGE_HELP: Grav-Sprachcode, aus dem übersetzt wird, z. B. "en". Leer bedeutet die Standardsprache der Website.
+      LANGUAGE_CODES: Supertext-Sprachcodes
+      LANGUAGE_CODES_HELP: In welche Sprachvariante Supertext übersetzt. Ohne Eintrag wird der Grav-Code unverändert verwendet.
+      LANGUAGE_CODES_KEY: Grav-Code, z. B. de
+      LANGUAGE_CODES_VALUE: Supertext-Code, z. B. de-CH
+      POLITENESS: Anrede
+      POLITENESS_DEFAULT: Supertext-Standard
+      POLITENESS_MORE: Formell (Sie, vous)
+      POLITENESS_LESS: Informell (du, tu)
+      POLITENESS_HELP: Gilt nur für Sprachen, die zwischen formeller und informeller Anrede unterscheiden.
+      SECTION_CONTENT: Was übersetzt wird
+      HEADER_FIELDS: Front-Matter-Felder
+      HEADER_FIELDS_HELP: Front-Matter-Felder, die zusammen mit dem Seiteninhalt übersetzt werden. Verschachtelte Felder mit Punkten angeben, z. B. metadata.description.
+      PUBLISH: Neue Übersetzungen veröffentlichen
+      PUBLISH_YES: Sofort veröffentlichen
+      PUBLISH_NO: Unveröffentlicht zur Prüfung anlegen
+      SECTION_ADVANCED: Erweitert
+      POLL_INTERVAL: Abfrageintervall (Sekunden)
+      POLL_TIMEOUT: Maximale Wartezeit (Sekunden)
+    ERRORS:
+      CHOOSE_LANGUAGE: Wählen Sie mindestens eine Sprache.
+      UNKNOWN_LANGUAGES: 'Keine Sprache dieser Website: %s'
+      ONE_LANGUAGE: Diese Website hat nur eine Sprache. Fügen Sie zuerst unter Konfiguration → System → Sprachen weitere hinzu.
+      ROUTE_MISSING: Die Route der Seite fehlt.
+      PAGE_NOT_FOUND: 'Seite nicht gefunden: %s'
+      NO_API_KEY: Es ist kein Supertext-API-Schlüssel eingerichtet. Eine Administratorin oder ein Administrator kann ihn in den Plugin-Einstellungen eintragen. Noch kein Supertext-Konto? Erstellen Sie eines unter https://www.supertext.com/person/en/account/signin. Ihren API-Schlüssel erzeugen Sie unter https://www.supertext.com/en/integrations/api (erfordert die Admin-Rolle).
+      AUTH_FAILED: Supertext hat den API-Schlüssel abgelehnt. Bitte prüfen Sie ihn in den Plugin-Einstellungen. Noch kein Supertext-Konto? Erstellen Sie eines unter https://www.supertext.com/person/en/account/signin. Ihren API-Schlüssel erzeugen Sie unter https://www.supertext.com/en/integrations/api (erfordert die Admin-Rolle).
+      NO_CURL: Für die Verbindung zu Supertext wird die PHP-Erweiterung curl benötigt.
+      UNREACHABLE: 'Supertext ist nicht erreichbar: %s'
+      TOO_LONG: Die Seite ist zu lang, um sie in einem Schritt zu übersetzen.
+      TRANSLATION_FAILED: Supertext konnte die Seite nicht übersetzen.
+      LIMIT_EXCEEDED: Ihr Supertext-Übersetzungslimit ist erreicht.
+      DELETED: Die Datei wurde bei Supertext gelöscht, bevor die Übersetzung heruntergeladen werden konnte.
+      EMPTY: Supertext hat eine leere Übersetzung zurückgegeben.
+      TIMEOUT: Supertext hat zu lange nicht geantwortet. Bitte versuchen Sie es noch einmal.
+      NO_RESULT: Es wurde keine Übersetzung zurückgegeben.
+      NO_FILE_ID: Supertext hat die Seite nicht angenommen (keine Datei-ID zurückgegeben).
+      NOT_FOUND: Supertext konnte die angeforderte Datei nicht finden.
+      RATE_LIMITED: Supertext ist ausgelastet (zu viele Anfragen). Bitte versuchen Sie es gleich noch einmal.
+      UNAVAILABLE: Der Supertext-Dienst ist zurzeit nicht verfügbar. Bitte versuchen Sie es später noch einmal.
+      HTTP_ERROR: Supertext hat mit HTTP %d geantwortet.
+      NO_SOURCE: Diese Seite hat keine %s-Fassung, aus der übersetzt werden kann.
+      NO_TEXT: Diese Seite hat keinen Text zum Übersetzen.
+      KEPT_EDITED: Die Übersetzung wurde nach dem Übersetzen bearbeitet. Sie wurde beibehalten; bestätigen Sie, um sie zu ersetzen.
+      KEPT_MANUAL: Es gibt bereits eine Übersetzung, die nicht mit Supertext erstellt wurde. Sie wurde beibehalten; bestätigen Sie, um sie zu ersetzen.
+      PARTLY_UNTRANSLATED: '%d von %d Textblöcken kamen unübersetzt zurück und wurden in der Ausgangssprache belassen.'
+  ICU:
+    PLUGIN_SUPERTEXT_TRANSLATION:
+      PANEL:
+        TITLE: Supertext-Übersetzung
+        CLOSE: Schließen
+        LOADING: Wird geladen …
+        HTTP_ERROR: Der Server hat mit HTTP {status} geantwortet.
+        STATE_MISSING: Noch nicht übersetzt
+        STATE_CURRENT: Aktuell
+        STATE_OUTDATED: Quelle seither geändert
+        STATE_EDITED: Nach der Übersetzung bearbeitet
+        STATE_MANUAL: Vorhanden, nicht von Supertext
+        FIELD_TITLE: Titel
+        FIELD_MENU: Menübezeichnung
+        FIELD_META_DESCRIPTION: Meta-Beschreibung
+        FIELD_META_KEYWORDS: Meta-Schlüsselwörter
+        FIELD_SUMMARY: Zusammenfassung
+        RESULT_LINE: '{name}: {result}'
+        RESULT_CREATED: Übersetzung erstellt
+        RESULT_UPDATED: Übersetzung aktualisiert
+        RESULT_SKIPPED: unverändert belassen
+        RESULT_ERROR: nicht übersetzt
+        INTRO: '{title} aus {source} übersetzen in:'
+        NO_API_KEY: Es ist noch kein Supertext-API-Schlüssel eingerichtet. Eine Administratorin oder ein Administrator kann ihn unter Plugins → Supertext Translation eintragen. Noch kein Supertext-Konto? {signup}. Den API-Schlüssel erzeugen Sie unter {apikey} (erfordert die Admin-Rolle).
+        SIGNUP_LINK: Erstellen Sie eines auf supertext.com
+        NO_LANGUAGES: Diese Website hat keine weiteren Sprachen. Fügen Sie zuerst in der Systemkonfiguration Sprachen hinzu.
+        CONFIRM_TITLE_ONE: Bestehende Übersetzung ersetzen?
+        CONFIRM_TITLE_MANY: Bestehende Übersetzungen ersetzen?
+        CONFIRM_EDITED: '{name} wurde nach dem Übersetzen bearbeitet.'
+        CONFIRM_MANUAL: '{name} ist bereits vorhanden und wurde nicht mit Supertext erstellt.'
+        CONFIRM_TEXT: Erneutes Übersetzen ersetzt diesen Text durch eine neue Übersetzung der Seite in {source}.
+        REPLACE: Ersetzen
+        CANCEL: Abbrechen
+        TRANSLATE: Übersetzen
+        TRANSLATE_ONE: In 1 Sprache übersetzen
+        TRANSLATE_MANY: In {count} Sprachen übersetzen
+        TRANSLATING: Wird übersetzt …
+        BUSY_HINT: Supertext übersetzt die Seite. Das dauert meist 10 bis 60 Sekunden; Sie können in der Zwischenzeit weiterarbeiten.
+        REVIEW_HINT: Neue Übersetzungen werden unveröffentlicht gespeichert, sofern Ihre Administration das nicht geändert hat. Wechseln Sie im Editor in die Sprache, um sie zu prüfen und zu veröffentlichen.
+        FOOT: Supertext übersetzt den Seiteninhalt.
+        FOOT_FIELDS: 'Supertext übersetzt den Seiteninhalt und diese Felder: {fields}.'
+        FOOT_KEPT: Von Hand bearbeitete Übersetzungen werden nie ohne Rückfrage ersetzt.
+fr:
+  PLUGIN_SUPERTEXT_TRANSLATION:
+    PANEL_LABEL: Traduction Supertext
+    SETTINGS:
+      PLUGIN_STATUS: Statut du plugin
+      ENABLED: Activé
+      DISABLED: Désactivé
+      SECTION_ACCOUNT: Compte Supertext
+      API_KEY: Clé API
+      API_KEY_HELP: Votre clé API Supertext. Vous pouvez la coller avec ou sans le préfixe "Supertext-Auth-Key". Laissez vide pour utiliser la variable d’environnement SUPERTEXT_API_KEY.
+      API_KEY_DESCRIPTION: Pas encore de compte Supertext ? <a href="https://www.supertext.com/person/en/account/signin" target="_blank" rel="noopener noreferrer">Créez-en un sur supertext.com</a>. Générez votre clé API sur <a href="https://www.supertext.com/en/integrations/api" target="_blank" rel="noopener noreferrer">supertext.com → Integrations → API</a> (rôle Admin requis).
+      API_URL: Point d’accès de l’API
+      API_URL_HELP: Ne modifiez cette valeur que si Supertext vous indique un autre point d’accès.
+      SECTION_LANGUAGES: Langues
+      SOURCE_LANGUAGE: Langue source
+      SOURCE_LANGUAGE_PLACEHOLDER: Langue par défaut du site
+      SOURCE_LANGUAGE_HELP: Code de langue Grav à partir duquel les traductions sont faites, par ex. "en". Vide signifie la langue par défaut du site.
+      LANGUAGE_CODES: Codes de langue Supertext
+      LANGUAGE_CODES_HELP: La variante de langue dans laquelle Supertext traduit. Sans entrée, le code Grav est utilisé tel quel.
+      LANGUAGE_CODES_KEY: Code Grav, par ex. de
+      LANGUAGE_CODES_VALUE: Code Supertext, par ex. de-CH
+      POLITENESS: Forme d’adresse
+      POLITENESS_DEFAULT: Valeur par défaut de Supertext
+      POLITENESS_MORE: Formel (Sie, vous)
+      POLITENESS_LESS: Informel (du, tu)
+      POLITENESS_HELP: S’applique uniquement aux langues qui distinguent le vouvoiement et le tutoiement.
+      SECTION_CONTENT: Ce qui est traduit
+      HEADER_FIELDS: Champs du front matter
+      HEADER_FIELDS_HELP: Champs du front matter traduits avec le contenu de la page. Utilisez des points pour les champs imbriqués, par ex. metadata.description.
+      PUBLISH: Publier les nouvelles traductions
+      PUBLISH_YES: Publier immédiatement
+      PUBLISH_NO: Créer non publiées pour relecture
+      SECTION_ADVANCED: Avancé
+      POLL_INTERVAL: Intervalle de vérification du statut (secondes)
+      POLL_TIMEOUT: Attente maximale (secondes)
+    ERRORS:
+      CHOOSE_LANGUAGE: Choisissez au moins une langue.
+      UNKNOWN_LANGUAGES: 'Langue inexistante sur ce site : %s'
+      ONE_LANGUAGE: Ce site n’a qu’une seule langue. Ajoutez d’abord des langues sous Configuration → Système → Langues.
+      ROUTE_MISSING: La route de la page est manquante.
+      PAGE_NOT_FOUND: 'Page introuvable : %s'
+      NO_API_KEY: Aucune clé API Supertext n’est configurée. Un administrateur peut l’ajouter dans les paramètres du plugin. Pas encore de compte Supertext ? Créez-en un sur https://www.supertext.com/person/en/account/signin. Générez votre clé API sur https://www.supertext.com/en/integrations/api (rôle Admin requis).
+      AUTH_FAILED: Supertext a refusé la clé API. Veuillez la vérifier dans les paramètres du plugin. Pas encore de compte Supertext ? Créez-en un sur https://www.supertext.com/person/en/account/signin. Générez votre clé API sur https://www.supertext.com/en/integrations/api (rôle Admin requis).
+      NO_CURL: L’extension PHP curl est nécessaire pour joindre Supertext.
+      UNREACHABLE: 'Impossible de joindre Supertext : %s'
+      TOO_LONG: La page est trop longue pour être traduite en une seule fois.
+      TRANSLATION_FAILED: Supertext n’a pas pu traduire la page.
+      LIMIT_EXCEEDED: Votre limite de traduction Supertext est atteinte.
+      DELETED: Le fichier a été supprimé chez Supertext avant que la traduction puisse être téléchargée.
+      EMPTY: Supertext a renvoyé une traduction vide.
+      TIMEOUT: Supertext a mis trop de temps à répondre. Veuillez réessayer.
+      NO_RESULT: Aucune traduction n’a été renvoyée.
+      NO_FILE_ID: Supertext n’a pas accepté la page (aucun identifiant de fichier renvoyé).
+      NOT_FOUND: Supertext n’a pas trouvé le fichier demandé.
+      RATE_LIMITED: Supertext est occupé (trop de requêtes). Veuillez réessayer dans un instant.
+      UNAVAILABLE: Le service Supertext est actuellement indisponible. Veuillez réessayer plus tard.
+      HTTP_ERROR: Supertext a répondu avec le code HTTP %d.
+      NO_SOURCE: Cette page n’a pas de version %s à partir de laquelle traduire.
+      NO_TEXT: Cette page n’a pas de texte à traduire.
+      KEPT_EDITED: La traduction a été modifiée après avoir été traduite. Elle a été conservée ; confirmez pour la remplacer.
+      KEPT_MANUAL: Une traduction qui n’a pas été faite avec Supertext existe déjà. Elle a été conservée ; confirmez pour la remplacer.
+      PARTLY_UNTRANSLATED: '%d blocs de texte sur %d sont revenus non traduits et ont été conservés dans la langue source.'
+  ICU:
+    PLUGIN_SUPERTEXT_TRANSLATION:
+      PANEL:
+        TITLE: Traduction Supertext
+        CLOSE: Fermer
+        LOADING: Chargement…
+        HTTP_ERROR: Le serveur a répondu avec le code HTTP {status}.
+        STATE_MISSING: Pas encore traduit
+        STATE_CURRENT: À jour
+        STATE_OUTDATED: Source modifiée depuis
+        STATE_EDITED: Modifié après la traduction
+        STATE_MANUAL: Existe, pas de Supertext
+        FIELD_TITLE: titre
+        FIELD_MENU: libellé du menu
+        FIELD_META_DESCRIPTION: méta-description
+        FIELD_META_KEYWORDS: méta-mots-clés
+        FIELD_SUMMARY: résumé
+        RESULT_LINE: '{name} : {result}'
+        RESULT_CREATED: traduction créée
+        RESULT_UPDATED: traduction mise à jour
+        RESULT_SKIPPED: conservée telle quelle
+        RESULT_ERROR: non traduite
+        INTRO: 'Traduire {title} depuis {source} vers :'
+        NO_API_KEY: Aucune clé API Supertext n’est encore configurée. Un administrateur peut l’ajouter sous Plugins → Supertext Translation. Pas encore de compte Supertext ? {signup}. Générez la clé API sur {apikey} (rôle Admin requis).
+        SIGNUP_LINK: Créez-en un sur supertext.com
+        NO_LANGUAGES: Ce site n’a pas d’autres langues. Ajoutez d’abord des langues dans la configuration du système.
+        CONFIRM_TITLE_ONE: Remplacer la traduction existante ?
+        CONFIRM_TITLE_MANY: Remplacer les traductions existantes ?
+        CONFIRM_EDITED: '{name} a été modifiée après avoir été traduite.'
+        CONFIRM_MANUAL: '{name} existe déjà et n’a pas été faite avec Supertext.'
+        CONFIRM_TEXT: Traduire à nouveau remplace ce texte par une nouvelle traduction de la page en {source}.
+        REPLACE: Remplacer
+        CANCEL: Annuler
+        TRANSLATE: Traduire
+        TRANSLATE_ONE: Traduire dans 1 langue
+        TRANSLATE_MANY: Traduire dans {count} langues
+        TRANSLATING: Traduction en cours…
+        BUSY_HINT: Supertext traduit la page. Cela prend généralement 10 à 60 secondes ; vous pouvez continuer à modifier en attendant.
+        REVIEW_HINT: Les nouvelles traductions sont enregistrées non publiées, sauf si votre administrateur a changé ce réglage. Passez l’éditeur dans la langue concernée pour les relire et les publier.
+        FOOT: Supertext traduit le contenu de la page.
+        FOOT_FIELDS: 'Supertext traduit le contenu de la page et ces champs : {fields}.'
+        FOOT_KEPT: Les traductions modifiées à la main ne sont jamais remplacées sans votre accord.
+it:
+  PLUGIN_SUPERTEXT_TRANSLATION:
+    PANEL_LABEL: Traduzione Supertext
+    SETTINGS:
+      PLUGIN_STATUS: Stato del plugin
+      ENABLED: Attivato
+      DISABLED: Disattivato
+      SECTION_ACCOUNT: Account Supertext
+      API_KEY: Chiave API
+      API_KEY_HELP: La Sua chiave API Supertext. Può incollarla con o senza il prefisso "Supertext-Auth-Key". Lasci vuoto per usare la variabile d’ambiente SUPERTEXT_API_KEY.
+      API_KEY_DESCRIPTION: Non ha ancora un account Supertext? <a href="https://www.supertext.com/person/en/account/signin" target="_blank" rel="noopener noreferrer">Ne crei uno su supertext.com</a>. Generi la Sua chiave API su <a href="https://www.supertext.com/en/integrations/api" target="_blank" rel="noopener noreferrer">supertext.com → Integrations → API</a> (richiede il ruolo Admin).
+      API_URL: Endpoint API
+      API_URL_HELP: Lo modifichi solo se Supertext Le indica un endpoint diverso.
+      SECTION_LANGUAGES: Lingue
+      SOURCE_LANGUAGE: Lingua di partenza
+      SOURCE_LANGUAGE_PLACEHOLDER: Lingua predefinita del sito
+      SOURCE_LANGUAGE_HELP: Codice lingua Grav da cui vengono fatte le traduzioni, ad es. "en". Vuoto significa la lingua predefinita del sito.
+      LANGUAGE_CODES: Codici lingua Supertext
+      LANGUAGE_CODES_HELP: La variante linguistica in cui Supertext traduce. Senza una voce, il codice Grav viene usato così com’è.
+      LANGUAGE_CODES_KEY: Codice Grav, ad es. de
+      LANGUAGE_CODES_VALUE: Codice Supertext, ad es. de-CH
+      POLITENESS: Forma di cortesia
+      POLITENESS_DEFAULT: Impostazione predefinita di Supertext
+      POLITENESS_MORE: Formale (Sie, vous)
+      POLITENESS_LESS: Informale (du, tu)
+      POLITENESS_HELP: Si applica solo alle lingue che distinguono tra forma di cortesia e forma informale.
+      SECTION_CONTENT: Cosa viene tradotto
+      HEADER_FIELDS: Campi del front matter
+      HEADER_FIELDS_HELP: Campi del front matter tradotti insieme al contenuto della pagina. Usi i punti per i campi annidati, ad es. metadata.description.
+      PUBLISH: Pubblica le nuove traduzioni
+      PUBLISH_YES: Pubblica subito
+      PUBLISH_NO: Crea non pubblicate per la revisione
+      SECTION_ADVANCED: Avanzate
+      POLL_INTERVAL: Intervallo di verifica dello stato (secondi)
+      POLL_TIMEOUT: Attesa massima (secondi)
+    ERRORS:
+      CHOOSE_LANGUAGE: Scelga almeno una lingua.
+      UNKNOWN_LANGUAGES: 'Non è una lingua di questo sito: %s'
+      ONE_LANGUAGE: Questo sito ha una sola lingua. Aggiunga prima altre lingue in Configurazione → Sistema → Lingue.
+      ROUTE_MISSING: Manca la route della pagina.
+      PAGE_NOT_FOUND: 'Pagina non trovata: %s'
+      NO_API_KEY: Nessuna chiave API Supertext configurata. Un amministratore può aggiungerla nelle impostazioni del plugin. Non ha ancora un account Supertext? Ne crei uno su https://www.supertext.com/person/en/account/signin. Generi la Sua chiave API su https://www.supertext.com/en/integrations/api (richiede il ruolo Admin).
+      AUTH_FAILED: Supertext ha rifiutato la chiave API. La verifichi nelle impostazioni del plugin. Non ha ancora un account Supertext? Ne crei uno su https://www.supertext.com/person/en/account/signin. Generi la Sua chiave API su https://www.supertext.com/en/integrations/api (richiede il ruolo Admin).
+      NO_CURL: Per raggiungere Supertext è necessaria l’estensione PHP curl.
+      UNREACHABLE: 'Impossibile raggiungere Supertext: %s'
+      TOO_LONG: La pagina è troppo lunga per essere tradotta in un’unica volta.
+      TRANSLATION_FAILED: Supertext non è riuscito a tradurre la pagina.
+      LIMIT_EXCEEDED: Il Suo limite di traduzione Supertext è stato superato.
+      DELETED: Il file è stato eliminato da Supertext prima che la traduzione potesse essere scaricata.
+      EMPTY: Supertext ha restituito una traduzione vuota.
+      TIMEOUT: Supertext ha impiegato troppo tempo a rispondere. Riprovi.
+      NO_RESULT: Non è stata restituita alcuna traduzione.
+      NO_FILE_ID: Supertext non ha accettato la pagina (nessun ID file restituito).
+      NOT_FOUND: Supertext non ha trovato il file richiesto.
+      RATE_LIMITED: Supertext è occupato (troppe richieste). Riprovi tra un momento.
+      UNAVAILABLE: Il servizio Supertext non è al momento disponibile. Riprovi più tardi.
+      HTTP_ERROR: Supertext ha risposto con HTTP %d.
+      NO_SOURCE: Questa pagina non ha una versione %s da cui tradurre.
+      NO_TEXT: Questa pagina non ha testo da tradurre.
+      KEPT_EDITED: La traduzione è stata modificata dopo essere stata tradotta. È stata mantenuta; confermi per sostituirla.
+      KEPT_MANUAL: Esiste già una traduzione non fatta con Supertext. È stata mantenuta; confermi per sostituirla.
+      PARTLY_UNTRANSLATED: '%d blocchi di testo su %d sono tornati non tradotti e sono stati mantenuti nella lingua di partenza.'
+  ICU:
+    PLUGIN_SUPERTEXT_TRANSLATION:
+      PANEL:
+        TITLE: Traduzione Supertext
+        CLOSE: Chiudi
+        LOADING: Caricamento…
+        HTTP_ERROR: Il server ha risposto con HTTP {status}.
+        STATE_MISSING: Non ancora tradotto
+        STATE_CURRENT: Aggiornato
+        STATE_OUTDATED: Origine modificata da allora
+        STATE_EDITED: Modificato dopo la traduzione
+        STATE_MANUAL: Esiste, non da Supertext
+        FIELD_TITLE: titolo
+        FIELD_MENU: etichetta del menu
+        FIELD_META_DESCRIPTION: meta descrizione
+        FIELD_META_KEYWORDS: meta parole chiave
+        FIELD_SUMMARY: riepilogo
+        RESULT_LINE: '{name}: {result}'
+        RESULT_CREATED: traduzione creata
+        RESULT_UPDATED: traduzione aggiornata
+        RESULT_SKIPPED: mantenuta così com’è
+        RESULT_ERROR: non tradotta
+        INTRO: 'Traduci {title} da {source} in:'
+        NO_API_KEY: Nessuna chiave API Supertext è ancora configurata. Un amministratore può aggiungerla in Plugin → Supertext Translation. Non ha ancora un account Supertext? {signup}. Generi la chiave API su {apikey} (richiede il ruolo Admin).
+        SIGNUP_LINK: Ne crei uno su supertext.com
+        NO_LANGUAGES: Questo sito non ha altre lingue. Aggiunga prima delle lingue nella configurazione di sistema.
+        CONFIRM_TITLE_ONE: Sostituire la traduzione esistente?
+        CONFIRM_TITLE_MANY: Sostituire le traduzioni esistenti?
+        CONFIRM_EDITED: '{name} è stata modificata dopo essere stata tradotta.'
+        CONFIRM_MANUAL: '{name} esiste già e non è stata fatta con Supertext.'
+        CONFIRM_TEXT: Tradurre di nuovo sostituisce quel testo con una nuova traduzione della pagina in {source}.
+        REPLACE: Sostituisci
+        CANCEL: Annulla
+        TRANSLATE: Traduci
+        TRANSLATE_ONE: Traduci in 1 lingua
+        TRANSLATE_MANY: Traduci in {count} lingue
+        TRANSLATING: Traduzione in corso…
+        BUSY_HINT: Supertext sta traducendo la pagina. Di solito ci vogliono da 10 a 60 secondi; nel frattempo può continuare a modificare.
+        REVIEW_HINT: Le nuove traduzioni vengono salvate non pubblicate, a meno che il Suo amministratore non abbia cambiato questa impostazione. Passi l’editor alla lingua per revisionarle e pubblicarle.
+        FOOT: Supertext traduce il contenuto della pagina.
+        FOOT_FIELDS: 'Supertext traduce il contenuto della pagina e questi campi: {fields}.'
+        FOOT_KEPT: Le traduzioni modificate a mano non vengono mai sostituite senza chiedere.

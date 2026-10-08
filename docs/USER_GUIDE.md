@@ -4,6 +4,8 @@ This guide is for editors. It explains how to translate a page into your site's 
 
 You need an account that can edit pages. If you don't see the Supertext button described below, ask your administrator.
 
+The Supertext panel and its messages appear in your admin language (English, German, French or Italian).
+
 ## Translate a page
 
 1. In the admin, open **Pages** and click the page you want to translate. Make sure you are on the page in the source language (usually English, shown as **EN** next to the title).
@@ -80,6 +82,8 @@ Not handled by the plugin:
 - Image alt texts written inside Markdown (`![alt](…)`) are not translated.
 
 ## Messages
+
+The messages appear in your admin language; the table lists their English wording.
 
 | Message | What it means and what to do |
 | --- | --- |

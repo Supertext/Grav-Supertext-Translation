@@ -131,6 +131,10 @@ access:
     media: { read: true, write: true }
 ```
 
+## Interface languages
+
+The panel, the settings and the plugin's messages are available in English, German, French and Italian. They follow each user's admin language in Admin2 (*Preferences → Admin Language*). Other languages show the English texts.
+
 ## Troubleshooting
 
 | Problem | Cause and fix |
