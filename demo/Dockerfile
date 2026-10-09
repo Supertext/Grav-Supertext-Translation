@@ -13,9 +13,10 @@ COPY demo/php.ini /usr/local/etc/php/conf.d/grav.ini
 COPY demo/apache.conf /etc/apache2/conf-available/grav.conf
 RUN a2enconf grav
 
-# Grav core with Admin2 and the API plugin bundled.
+# Grav core with Admin2 and the API plugin bundled (GitHub release asset:
+# getgrav.org only serves the latest version).
 ARG GRAV_VERSION=2.2.4
-RUN curl -fsSL -o /tmp/grav.zip "https://getgrav.org/download/core/grav-admin/${GRAV_VERSION}" \
+RUN curl -fsSL -o /tmp/grav.zip "https://github.com/getgrav/grav/releases/download/${GRAV_VERSION}/grav-admin-v${GRAV_VERSION}.zip" \
  && unzip -q /tmp/grav.zip -d /tmp \
  && rm -rf /var/www/html \
  && mv /tmp/grav-admin /var/www/html \
