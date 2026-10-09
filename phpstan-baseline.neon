@@ -1,0 +1,13 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Strict comparison using \!\=\= between '''' and '''' will always evaluate to false\.$#'
+			identifier: notIdentical.alwaysFalse
+			count: 1
+			path: classes/Markdown/InlineConverter.php
+
+		-
+			message: '#^Offset ''effective'' on array\{branding\: array\<string, mixed\>, site\: array\<string, mixed\>, media_upload\: array\<string, mixed\>, user\: array\<string, mixed\>, effective\: array\<string, mixed\>, can_edit_site\: bool\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: classes/Messages.php

@@ -120,7 +120,7 @@ SUPERTEXT_API_KEY=stand-in SUPERTEXT_API_URL=http://127.0.0.1:8089/v1/ php -S 12
 
 Also checked by hand (and by the screenshot script) in a real Grav 2.2.4 with Admin2: the panel loads, the editor account can translate, a save in Admin2 of an unchanged translation keeps it *current*, an edit makes it *edited*.
 
-CI (`.github/workflows/ci.yml`) runs the tests on PHP 8.3 and 8.4, lints all PHP files and syntax-checks the panel script.
+CI (`.github/workflows/ci.yml`) runs the tests on PHP 8.3 and 8.4, lints all PHP files, syntax-checks the panel script and runs PHPStan (see *Code quality and security checks*).
 
 ## Screenshots
 
@@ -155,6 +155,22 @@ The demo runs on Railway (project `supertext-cms-demos-php`, service `Grav`, reg
 The accounts are created on every start if no account with that email exists; existing accounts are never changed (no password resets). The username is the part of the email before the `@`. A password that breaks Grav's rule (8+ characters with a number, upper- and lower-case letter) skips that account with a warning in the log; the demo still starts. Only variable names are logged. Because the accounts exist, Admin2's first-run "create administrator" screen does not appear once `DEMO_*` is set. See `demo/.env.example`.
 
 Grav has an editor role only as permissions, not as a named role; the editor account gets exactly the page and media permissions listed above. Languages have no separate access rights in Grav, so page write access covers every language.
+
+## Code quality and security checks
+
+- **Checks** (`.github/workflows/checks.yml`): on every push and pull request, [actionlint](https://github.com/rhysd/actionlint) and [zizmor](https://docs.zizmor.sh) lint the workflows. On pull requests, dependency review fails a PR that adds a package with a known vulnerability (moderate or worse). Third-party actions are pinned to commit SHAs (Dependabot keeps them current); checkouts don't keep credentials, and workflows get `contents: read` unless a job needs more (the release job: `contents: write`).
+- **Links** (`.github/workflows/links.yml`): [lychee](https://lychee.cli.rs) checks the links in all Markdown files weekly and whenever docs change on `main`. Broken links open or update the issue "Broken links in the docs" (a docs push that breaks links also fails). Links that can't work from CI go in `.lycheeignore` (one regex per line).
+- **PHPStan** (job `phpstan` in `ci.yml`, config `phpstan.neon`): level 5 on the plugin's own code (`supertext-translation.php`, `classes/`), not the tests or `demo/`. Grav isn't a Composer package, so the job unpacks the same Grav + Admin2 release as the demo into `.grav/` (git-ignored); PHPStan reads Grav core and the API plugin's classes from there. Locally:
+
+  ```bash
+  mkdir .grav && curl -fsSL https://github.com/getgrav/grav/releases/download/2.2.4/grav-admin-v2.2.4.zip -o .grav/grav.zip && unzip -q .grav/grav.zip -d .grav
+  phpstan analyse            # or: php phpstan.phar analyse
+  ```
+
+  Existing findings that aren't simple to fix are listed in `phpstan-baseline.neon` (regenerate with `phpstan analyse --generate-baseline phpstan-baseline.neon` after fixing one). New code must not add findings.
+- **GitHub settings** (set by Remy's setup script, not in the repo): secret scanning with push protection (a push containing a known token format is rejected; findings under *Security → Secret scanning*) and CodeQL default setup (findings under *Security → Code scanning* and as PR comments). CodeQL doesn't cover PHP, which is why this repo runs PHPStan.
+
+Before starting work in this repo, look at its open findings: code scanning alerts, secret scanning alerts, Dependabot PRs and the "Broken links in the docs" issue.
 
 ## Releasing
 

@@ -29,7 +29,7 @@ final class Messages
         $resolver = 'Grav\\Plugin\\Api\\Services\\PreferencesResolver';
         if ($user !== null && class_exists($resolver)) {
             try {
-                $effective = (new $resolver($grav, $grav['config']))->resolve($user, false)['effective'] ?? [];
+                $effective = (new $resolver($grav))->resolve($user, false)['effective'] ?? [];
                 if (is_string($effective['adminLanguage'] ?? null) && $effective['adminLanguage'] !== '') {
                     $language = $effective['adminLanguage'];
                 }

@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release
@@ -28,8 +28,12 @@ env:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Read the version from CHANGELOG.md
         id: version
@@ -63,11 +67,13 @@ jobs:
 
       - name: Build the installable zip (unpacks into supertext-translation/)
         if: steps.version.outputs.release == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: >-
           git archive --format=zip --prefix=supertext-translation/
-          -o "supertext-translation-${{ steps.version.outputs.version }}.zip" HEAD --
+          -o "supertext-translation-${VERSION}.zip" HEAD --
           . ':(exclude)demo' ':(exclude)tests' ':(exclude)scripts' ':(exclude).github'
-          ':(exclude)phpunit.xml' ':(exclude)composer.lock' ':(exclude)CLAUDE.md' ':(exclude).dockerignore'
+          ':(exclude)phpunit.xml' ':(exclude)phpstan.neon' ':(exclude)phpstan-baseline.neon' ':(exclude)composer.lock' ':(exclude)CLAUDE.md' ':(exclude).dockerignore'
 
       - name: Create the release
         if: steps.version.outputs.release == 'true'

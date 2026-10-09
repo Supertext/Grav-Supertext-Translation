@@ -193,7 +193,7 @@ final class MarkdownDocument
             $this->flush();
             $this->inList = true;
             $this->listIndent = strlen($m[1] . $m[2] . $m[3]);
-            $prefix = $m[1] . $m[2] . $m[3] . ($m[4] ?? '');
+            $prefix = $m[1] . $m[2] . $m[3] . $m[4];
             $this->buffer = [
                 'prefix' => $quote . $prefix,
                 'cont' => $quote . str_repeat(' ', strlen($m[1] . $m[2] . $m[3])),

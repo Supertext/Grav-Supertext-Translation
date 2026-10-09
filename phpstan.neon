@@ -1,0 +1,17 @@
+# PHPStan: static analysis of the plugin's own code against Grav 2 core and its API plugin.
+# Grav isn't a Composer dependency: CI (and you, locally) unpack the grav-admin
+# release into .grav/ first. See docs/DEVELOPER.md → Code quality and security checks.
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: 5
+    paths:
+        - supertext-translation.php
+        - classes
+    bootstrapFiles:
+        - .grav/grav-admin/vendor/autoload.php
+        - .grav/grav-admin/user/plugins/api/vendor/autoload.php
+    scanDirectories:
+        - .grav/grav-admin/user/plugins/api/classes
+    tmpDir: .cache/phpstan

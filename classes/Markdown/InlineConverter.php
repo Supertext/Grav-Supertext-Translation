@@ -194,7 +194,7 @@ final class InlineConverter
             return null;
         }
         $inner = substr($text, $start + 1, $j - $start - 1);
-        $title = isset($m[2]) && $m[2] !== '' ? substr($m[2], 1, -1) : null;
+        $title = isset($m[2]) ? substr($m[2], 1, -1) : null;
         return [$inner, trim($m[1], '<>'), $title, ($j + 1 - $start) + strlen($m[0])];
     }
 
