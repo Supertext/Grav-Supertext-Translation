@@ -126,8 +126,8 @@ final class SupertextClient
     {
         $fields = ['target_lang' => $target];
         if ($source !== '') {
-            // Supertext expects the source as a primary subtag ("en", not "en-GB").
-            $fields['source_lang'] = strtolower((string)strtok($source, '-_'));
+            // Supertext expects the source as a bare language ("en", not "en-GB").
+            $fields['source_lang'] = LanguageCodes::source($source);
         }
         if (in_array($politeness, ['more', 'less'], true)) {
             $fields['politeness'] = $politeness;

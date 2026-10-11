@@ -25,7 +25,7 @@ en:
       SOURCE_LANGUAGE_PLACEHOLDER: Site default language
       SOURCE_LANGUAGE_HELP: Grav language code the translations are made from, e.g. "en". Empty means the site's default language.
       LANGUAGE_CODES: Supertext language codes
-      LANGUAGE_CODES_HELP: Which language variant Supertext translates into. Without an entry, the Grav code is used as it is.
+      LANGUAGE_CODES_HELP: Which language variant Supertext translates into. Without an entry, the Grav code is used with a region, e.g. de becomes de-DE.
       LANGUAGE_CODES_KEY: Grav code, e.g. de
       LANGUAGE_CODES_VALUE: Supertext code, e.g. de-CH
       POLITENESS: Form of address
@@ -129,7 +129,7 @@ de:
       SOURCE_LANGUAGE_PLACEHOLDER: Standardsprache der Website
       SOURCE_LANGUAGE_HELP: Grav-Sprachcode, aus dem übersetzt wird, z. B. "en". Leer bedeutet die Standardsprache der Website.
       LANGUAGE_CODES: Supertext-Sprachcodes
-      LANGUAGE_CODES_HELP: In welche Sprachvariante Supertext übersetzt. Ohne Eintrag wird der Grav-Code unverändert verwendet.
+      LANGUAGE_CODES_HELP: In welche Sprachvariante Supertext übersetzt. Ohne Eintrag wird der Grav-Code mit Region verwendet, z. B. wird de zu de-DE.
       LANGUAGE_CODES_KEY: Grav-Code, z. B. de
       LANGUAGE_CODES_VALUE: Supertext-Code, z. B. de-CH
       POLITENESS: Anrede
@@ -233,7 +233,7 @@ fr:
       SOURCE_LANGUAGE_PLACEHOLDER: Langue par défaut du site
       SOURCE_LANGUAGE_HELP: Code de langue Grav à partir duquel les traductions sont faites, par ex. "en". Vide signifie la langue par défaut du site.
       LANGUAGE_CODES: Codes de langue Supertext
-      LANGUAGE_CODES_HELP: La variante de langue dans laquelle Supertext traduit. Sans entrée, le code Grav est utilisé tel quel.
+      LANGUAGE_CODES_HELP: La variante de langue dans laquelle Supertext traduit. Sans entrée, le code Grav est utilisé avec une région, p. ex. de devient de-DE.
       LANGUAGE_CODES_KEY: Code Grav, par ex. de
       LANGUAGE_CODES_VALUE: Code Supertext, par ex. de-CH
       POLITENESS: Forme d’adresse
@@ -337,7 +337,7 @@ it:
       SOURCE_LANGUAGE_PLACEHOLDER: Lingua predefinita del sito
       SOURCE_LANGUAGE_HELP: Codice lingua Grav da cui vengono fatte le traduzioni, ad es. "en". Vuoto significa la lingua predefinita del sito.
       LANGUAGE_CODES: Codici lingua Supertext
-      LANGUAGE_CODES_HELP: La variante linguistica in cui Supertext traduce. Senza una voce, il codice Grav viene usato così com’è.
+      LANGUAGE_CODES_HELP: La variante linguistica in cui Supertext traduce. Senza una voce, il codice Grav viene usato con una regione, ad es. de diventa de-DE.
       LANGUAGE_CODES_KEY: Codice Grav, ad es. de
       LANGUAGE_CODES_VALUE: Codice Supertext, ad es. de-CH
       POLITENESS: Forma di cortesia

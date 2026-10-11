@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- Target languages without a region (e.g. Grav's `de` without a *Supertext language codes* entry) are now sent to Supertext as a regional code (`de-DE`, `fr-FR`, `en-US`, …), which Supertext requires; mapped codes are normalized (`de_ch` → `de-CH`). The source is always sent without region.
+
 ### Added
 
 - French and Italian interface, and German, which was missing: the panel, the settings and the messages from Supertext now follow the user's admin language. The "no API key" and "API key refused" messages now also link to Supertext account sign-up.

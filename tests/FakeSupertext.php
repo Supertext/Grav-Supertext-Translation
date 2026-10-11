@@ -49,6 +49,11 @@ final class FakeSupertext implements Transport
         }
         if ($method === 'POST' && str_ends_with($path, '/translate/ai/file')) {
             preg_match('/name="target_lang"\r\n\r\n([^\r]*)/', (string)$body, $t);
+            preg_match('/name="source_lang"\r\n\r\n([^\r]*)/', (string)$body, $s);
+            // Like the real API: the target needs a region ("de-DE"), the source must be bare ("en").
+            if (!preg_match('/^[a-z]{2,3}-[A-Za-z0-9]{2,4}$/', $t[1] ?? '') || preg_match('/[-_]/', $s[1] ?? '')) {
+                return $this->json(400, ['code' => 'INVALID_LANGUAGE_PAIR']);
+            }
             preg_match('/Content-Type: text\/html\r\n\r\n(.*)\r\n--/s', (string)$body, $f);
             $id = 'file-' . (count($this->files) + 1);
             $this->files[$id] = ['html' => $f[1] ?? '', 'target' => $t[1] ?? '', 'polls' => 0];

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Grav\Plugin\SupertextTranslation;
 
+use Grav\Plugin\SupertextTranslation\Api\LanguageCodes;
 use Grav\Plugin\SupertextTranslation\Api\SupertextClient;
 
 /** Plugin settings (user/config/plugins/supertext-translation.yaml), with defaults. */
@@ -68,17 +69,18 @@ final class Settings
         );
     }
 
-    /** The code sent to Supertext for a Grav language: the mapping, else "de-ch" → "de-CH", else as is. */
+    /**
+     * The target code sent to Supertext for a Grav language, always with a region: the
+     * mapping, else the Grav code ("de-ch" → "de-CH", bare "de" → "de-DE").
+     */
     public function supertextCode(string $gravCode): string
     {
-        $gravCode = strtolower($gravCode);
-        if (isset($this->languageCodes[$gravCode])) {
-            return $this->languageCodes[$gravCode];
-        }
-        $parts = preg_split('/[-_]/', $gravCode) ?: [$gravCode];
-        if (count($parts) === 2 && strlen($parts[1]) === 2) {
-            return $parts[0] . '-' . strtoupper($parts[1]);
-        }
-        return $gravCode;
+        return LanguageCodes::target($gravCode, $this->languageCodes[strtolower($gravCode)] ?? '');
+    }
+
+    /** The source code sent to Supertext for a Grav language: the bare language ("de-ch" → "de"). */
+    public function sourceCode(string $gravCode): string
+    {
+        return LanguageCodes::source($gravCode, $this->languageCodes[strtolower($gravCode)] ?? '');
     }
 }

@@ -78,7 +78,7 @@ final class PageTranslatorTest extends TestCase
         self::assertStringNotContainsString('supertext:', (string)file_get_contents($this->folder . '/default.en.md'));
         // de-CH for German (mapped), "fr" as is.
         self::assertStringContainsString("name=\"target_lang\"\r\n\r\nde-CH", (string)$this->api->requests[0]['body']);
-        self::assertStringContainsString("name=\"target_lang\"\r\n\r\nfr\r\n", (string)$this->api->requests[1]['body']);
+        self::assertStringContainsString("name=\"target_lang\"\r\n\r\nfr-FR\r\n", (string)$this->api->requests[1]['body']);
     }
 
     public function testStates(): void
@@ -145,7 +145,7 @@ final class PageTranslatorTest extends TestCase
 
     public function testErrorsAreReportedPerLanguage(): void
     {
-        $this->api->failFor['fr'] = 'error';
+        $this->api->failFor['fr-FR'] = 'error';
         $result = $this->translate();
         self::assertSame('created', $result['de']['result']);
         self::assertSame('error', $result['fr']['result']);
@@ -174,7 +174,9 @@ final class PageTranslatorTest extends TestCase
         $settings = Settings::fromArray(['language_codes' => [['grav' => 'FR', 'supertext' => 'fr-CH']], 'api_key' => ''], 'Supertext-Auth-Key env');
         self::assertSame('fr-CH', $settings->supertextCode('fr'));
         self::assertSame('de-CH', $settings->supertextCode('de-ch'));
-        self::assertSame('it', $settings->supertextCode('it'));
+        self::assertSame('it-IT', $settings->supertextCode('it'));
+        self::assertSame('fr', $settings->sourceCode('fr'));
+        self::assertSame('de', $settings->sourceCode('de-ch'));
         self::assertSame('env', $settings->apiKey);
     }
 

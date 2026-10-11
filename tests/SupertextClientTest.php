@@ -90,7 +90,7 @@ final class SupertextClientTest extends TestCase
     public function testMissingKeyFailsBeforeAnyRequest(): void
     {
         $api = new FakeSupertext();
-        $result = $this->client($api, '')->translateMany(['de' => ['html' => '<p data-st-id="0">x</p>', 'target' => 'de']]);
+        $result = $this->client($api, '')->translateMany(['de' => ['html' => '<p data-st-id="0">x</p>', 'target' => 'de-DE']]);
         self::assertInstanceOf(SupertextException::class, $result['de']);
         self::assertStringContainsString('No Supertext API key', $result['de']->getMessage());
         self::assertSame([], $api->requests);
@@ -99,10 +99,10 @@ final class SupertextClientTest extends TestCase
     public function testOneFailingLanguageDoesNotStopTheOthers(): void
     {
         $api = new FakeSupertext();
-        $api->failFor['fr'] = 'limit_exceeded';
+        $api->failFor['fr-FR'] = 'limit_exceeded';
         $result = $this->client($api)->translateMany([
-            'de' => ['html' => '<p data-st-id="0">x</p>', 'target' => 'de'],
-            'fr' => ['html' => '<p data-st-id="0">x</p>', 'target' => 'fr'],
+            'de' => ['html' => '<p data-st-id="0">x</p>', 'target' => 'de-DE'],
+            'fr' => ['html' => '<p data-st-id="0">x</p>', 'target' => 'fr-FR'],
         ]);
         self::assertIsString($result['de']);
         self::assertInstanceOf(SupertextException::class, $result['fr']);

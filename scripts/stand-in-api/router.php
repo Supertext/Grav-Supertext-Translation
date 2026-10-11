@@ -40,6 +40,11 @@ if ($method === 'GET' && $path === '/v1/features') {
 if ($method === 'POST' && $path === '/v1/translate/ai/file') {
     $target = (string)($_POST['target_lang'] ?? '');
     $file = $_FILES['file'] ?? null;
+    // Like the real API: the target needs a region ("de-DE"), the source must be bare ("en").
+    if (!preg_match('/^[a-z]{2,3}-[A-Za-z0-9]{2,4}$/', $target) || preg_match('/[-_]/', (string)($_POST['source_lang'] ?? ''))) {
+        reply(400, ['code' => 'INVALID_LANGUAGE_PAIR', 'message' => 'Invalid language pair']);
+        return;
+    }
     if ($target === '' || !$file || ($file['type'] ?? '') !== 'text/html') {
         reply(415, ['message' => 'FILETYPE_NOT_ALLOWED']);
         return;

@@ -13,7 +13,7 @@ Grav 2 replaced its classic admin with **Admin2**, a single-page app that talks 
 | API controller | `classes/Controller/TranslationController.php` | `GET /api/v1/supertext/status?route=…` and `POST /api/v1/supertext/translate` (`{route, languages, overwrite}`). Extends the API plugin's `AbstractApiController`, so authentication, page ACL (`authorizePageAction(…, 'update', 'api.pages.write')`), error format (RFC 7807) and cache invalidation headers work like the core routes. |
 | Translator | `classes/PageTranslator.php` | Reads the source file, builds one HTML document, sends it to Supertext for all target languages, writes `<template>.<lang>.md`, tracks states. Independent of Grav (testable). |
 | Markdown | `classes/Markdown/MarkdownDocument.php`, `InlineConverter.php` | Splits the Markdown body into blocks and back; converts inline Markdown to HTML and back. |
-| Supertext client | `classes/Api/SupertextClient.php`, `HtmlDocument.php`, `CurlTransport.php` | Protocol, retries, HTML packing. |
+| Supertext client | `classes/Api/SupertextClient.php`, `HtmlDocument.php`, `CurlTransport.php`, `LanguageCodes.php` | Protocol, retries, HTML packing, language code rules (see *Language codes*). |
 | Settings | `classes/Settings.php`, `blueprints.yaml`, `supertext-translation.yaml` | Settings with defaults, the Admin2 form, defaults file. |
 | Strings | `languages.yaml`, `classes/Messages.php` | All UI strings in English, German, French and Italian (see *Interface languages* below). `Messages` resolves the admin user's language (the API plugin's `PreferencesResolver`, as its own controllers do) and translates the panel label and the API's messages. |
 
@@ -73,7 +73,7 @@ AI file translation API v1, same as the WordPress, TYPO3, Strapi and Payload plu
 | Step | Request |
 | --- | --- |
 | Check key (free) | `GET https://api.supertext.com/v1/features` |
-| Submit | `POST /v1/translate/ai/file` multipart: `file` (Content-Type exactly `text/html`, no charset), `target_lang` (e.g. `de-CH`), `source_lang` (primary subtag only, `en`), optional `politeness` (`more`/`less`) → `{"file_id": …}` |
+| Submit | `POST /v1/translate/ai/file` multipart: `file` (Content-Type exactly `text/html`, no charset), `target_lang` (regional code, e.g. `de-CH`), `source_lang` (bare language, `en`; see *Language codes*), optional `politeness` (`more`/`less`) → `{"file_id": …}` |
 | Poll | `GET /v1/translate/ai/file/{id}/status` → `in_progress`, `done`, `error`, `limit_exceeded`, `deleted` |
 | Download | `GET /v1/translate/ai/file/{id}/translation` → translated HTML |
 | Clean up | `DELETE /v1/translate/ai/file/{id}` (always, also after errors) |
@@ -86,6 +86,16 @@ Lessons applied from the live API (October 2026):
 - Documents over 900,000 characters are refused before sending.
 
 Verified against the live API on 2026-10-05: the demo's About page into `de-CH` and `fr-CH` in 7 to 9 s (locally and on the Railway demo), with bold text moved correctly inside the translated sentence.
+
+### Language codes
+
+Learned from the live API: the **source** is the bare language (`en`, `de`), the **target** a regional code (`de-DE`, `fr-CH`, `en-US`). Supertext rejects a bare target such as `de` with `INVALID_LANGUAGE_PAIR`, and a regional source too. `Api\LanguageCodes` applies the rule; `Settings::supertextCode()` (target) and `Settings::sourceCode()` (source) feed it the Grav language codes and the `language_codes` mapping:
+
+- Source: the source language (or its mapped code) reduced to the language: `en` → `en`, mapped `en-GB` → `en`.
+- Target: the mapped code if set, otherwise the Grav code. A code with a region keeps it, normalized (`de-ch` / `de_CH` → `de-CH`; scripts and numeric regions stay: `zh-Hant`, `es-419`). A bare code gets a regional default: ar→ar-SA, bg→bg-BG, cs→cs-CZ, da→da-DK, de→de-DE, el→el-GR, en→en-US, es→es-ES, et→et-EE, fi→fi-FI, fr→fr-FR, hr→hr-HR, hu→hu-HU, it→it-IT, ja→ja-JP, ko→ko-KR, lt→lt-LT, lv→lv-LV, nb→nb-NO, nl→nl-NL, pl→pl-PL, pt→pt-PT, ro→ro-RO, ru→ru-RU, sk→sk-SK, sl→sl-SI, sr→sr-RS, sv→sv-SE, th→th-TH, tr→tr-TR, uk→uk-UA, vi→vi-VN, zh→zh-CN (same table as the other Supertext plugins). Unknown bare codes are sent unchanged, so Supertext's error names them.
+- Translating within one language (source `en`, target `en-GB`) is allowed.
+
+`tests/FakeSupertext.php` and the stand-in (`scripts/stand-in-api/router.php`) reject bare targets and regional sources like the real API.
 
 ## Local setup
 
@@ -115,6 +125,7 @@ SUPERTEXT_API_KEY=stand-in SUPERTEXT_API_URL=http://127.0.0.1:8089/v1/ php -S 12
 
 - `MarkdownTest`: block splitting, round trips, formatting mapping, protected tokens, escaping.
 - `SupertextClientTest`: protocol order, multipart fields, auth header, 429 retries, error messages, per-language failures, cleanup.
+- `LanguageCodesTest`: language code rules (bare source, regional source → bare, bare target → default region, normalizing, mapping wins, unknown codes unchanged).
 - `PageTranslatorTest`: creating, states (missing/current/outdated/edited/manual), keeping published state, overwrite protection, settings.
 - `LanguagesTest`: `languages.yaml` complete in English, German, French and Italian, and every key used by the settings, the panel and the PHP code present.
 

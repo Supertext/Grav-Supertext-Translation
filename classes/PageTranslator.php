@@ -126,7 +126,7 @@ final class PageTranslator
             $jobs[$lang] = [
                 'html' => $html,
                 'target' => $this->settings->supertextCode($lang),
-                'source' => $this->settings->supertextCode($source),
+                'source' => $this->settings->sourceCode($source),
                 'politeness' => $this->settings->politeness,
             ];
         }
