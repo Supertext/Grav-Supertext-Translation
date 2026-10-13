@@ -107,6 +107,19 @@ final class SupertextClientTest extends TestCase
         self::assertCount(1, $api->requests);
     }
 
+    public function testUnknownLanguageIsAnUnsupportedLanguagePair(): void
+    {
+        // The live API answers a language it doesn't know at all with HTTP 404 INVALID_LANGUAGE_PAIR.
+        $api = new FakeSupertext();
+        $api->queue = [['status' => 404, 'headers' => ['content-type' => 'application/json'], 'body' => '{"error_code":"INVALID_LANGUAGE_PAIR","source_lang":"en","target_lang":"xx-YY"}']];
+        $result = $this->client($api)->translateMany([
+            'xx' => ['html' => '<div data-st-id="0">Hello</div>', 'target' => 'xx-YY', 'source' => 'en'],
+        ]);
+        self::assertInstanceOf(SupertextException::class, $result['xx']);
+        self::assertSame('invalid_language_pair', $result['xx']->reason);
+        self::assertSame(['en', 'xx-YY'], $result['xx']->args);
+    }
+
     public function testRateLimitIsRetriedBySdk(): void
     {
         $api = new FakeSupertext();

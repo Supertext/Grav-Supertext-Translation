@@ -9,6 +9,8 @@
 
 ### Fixed
 
+- A target language Supertext doesn't know is now reported as an unsupported language pair naming the two languages (was: "Supertext could not find the requested file").
+- Locale variants in the *Supertext language codes* such as `de_DE_formal` are sent to Supertext as `de-DE`.
 - Target languages without a region (e.g. Grav's `de` without a *Supertext language codes* entry) are now sent to Supertext as a regional code (`de-DE`, `fr-FR`, `en-US`, …), which Supertext requires; mapped codes are normalized (`de_ch` → `de-CH`). The source is always sent without region.
 
 ### Added

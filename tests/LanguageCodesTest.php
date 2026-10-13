@@ -44,6 +44,7 @@ final class LanguageCodesTest extends TestCase
         yield 'numeric region kept' => ['es-419', '', 'es-419'];
         yield 'override wins' => ['de', 'de-CH', 'de-CH'];
         yield 'override normalized' => ['de', 'de_at', 'de-AT'];
+        yield 'override variant dropped' => ['de', 'de_DE_formal', 'de-DE'];
         yield 'bare override gets default region' => ['de', 'it', 'it-IT'];
         yield 'blank override ignored' => ['fr', ' ', 'fr-FR'];
         yield 'unknown bare code unchanged' => ['rm', '', 'rm'];
