@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Grav\Plugin\SupertextTranslation;
 
-use Grav\Plugin\SupertextTranslation\Api\LanguageCodes;
-use Grav\Plugin\SupertextTranslation\Api\SupertextClient;
+use Supertext\GravTranslation\Sdk\LanguageCodes;
+use Supertext\GravTranslation\Sdk\Supertext;
 
 /** Plugin settings (user/config/plugins/supertext-translation.yaml), with defaults. */
 final class Settings
@@ -16,7 +16,7 @@ final class Settings
      */
     public function __construct(
         public readonly string $apiKey = '',
-        public readonly string $apiUrl = SupertextClient::DEFAULT_BASE_URL,
+        public readonly string $apiUrl = Supertext::LIVE_BASE_URL,
         public readonly string $sourceLanguage = '',
         public readonly array $languageCodes = [],
         public readonly string $politeness = 'default',
@@ -29,9 +29,9 @@ final class Settings
     /** @param array<string, mixed> $config */
     public static function fromArray(array $config, ?string $environmentKey = null, ?string $environmentUrl = null): self
     {
-        $apiKey = SupertextClient::normalizeKey((string)($config['api_key'] ?? ''));
+        $apiKey = self::normalizeKey((string)($config['api_key'] ?? ''));
         if ($apiKey === '' && $environmentKey !== null) {
-            $apiKey = SupertextClient::normalizeKey($environmentKey);
+            $apiKey = self::normalizeKey($environmentKey);
         }
 
         $codes = [];
@@ -58,7 +58,7 @@ final class Settings
         return new self(
             apiKey: $apiKey,
             // SUPERTEXT_API_URL (testing only) wins over the setting, e.g. for a local stand-in API.
-            apiUrl: trim((string)$environmentUrl) ?: trim((string)($config['api_url'] ?? '')) ?: SupertextClient::DEFAULT_BASE_URL,
+            apiUrl: trim((string)$environmentUrl) ?: trim((string)($config['api_url'] ?? '')) ?: Supertext::LIVE_BASE_URL,
             sourceLanguage: strtolower(trim((string)($config['source_language'] ?? ''))),
             languageCodes: $codes,
             politeness: in_array($politeness, ['default', 'more', 'less'], true) ? $politeness : 'default',
@@ -75,12 +75,21 @@ final class Settings
      */
     public function supertextCode(string $gravCode): string
     {
-        return LanguageCodes::target($gravCode, $this->languageCodes[strtolower($gravCode)] ?? '');
+        return LanguageCodes::target(strtolower($gravCode), $this->languageCodes);
     }
 
     /** The source code sent to Supertext for a Grav language: the bare language ("de-ch" → "de"). */
     public function sourceCode(string $gravCode): string
     {
-        return LanguageCodes::source($gravCode, $this->languageCodes[strtolower($gravCode)] ?? '');
+        return LanguageCodes::source(strtolower($gravCode), $this->languageCodes);
+    }
+
+    /**
+     * The key as entered, without the "Supertext-Auth-Key " prefix Supertext shows it with
+     * (the SDK strips it too; here it decides whether a key is configured at all).
+     */
+    public static function normalizeKey(#[\SensitiveParameter] string $key): string
+    {
+        return trim((string)preg_replace('/^\s*Supertext-Auth-Key\s+/i', '', trim($key)));
     }
 }

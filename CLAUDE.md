@@ -89,6 +89,7 @@ Lessons from testing against the live API (October 2026), to apply in every plug
 
 - Grav 2 only: the UI is a context panel in **Admin2** (`admin-next/panels/supertext-translation.js`, registered via `onApiContextPanels`), backed by routes registered with `onApiRegisterRoutes`. Admin2 fires no `onAdmin*` editor events.
 - Page logic (`classes/PageTranslator.php`, `classes/Markdown/`) has no Grav dependency and is unit-tested; keep it that way.
+- Supertext API: through the bundled SDK in `lib/supertext-sdk/` (namespace `Supertext\GravTranslation\Sdk`, loaded by the plugin's own autoloader). Never edit the copy: fix the SDK repo, then `scripts/vendor-sdk.sh`. `classes/Api/SupertextClient.php` only adds parallel languages and the mapping of SDK error codes to translatable reasons.
 - UI strings live in `languages.yaml` (`en`, `de`, `fr`, `it`): flat `PLUGIN_SUPERTEXT_TRANSLATION.*` keys for the settings and PHP messages, `ICU.PLUGIN_SUPERTEXT_TRANSLATION.PANEL.*` for the panel (via `window.__GRAV_I18N`; keep its `EN` fallback in sync). See `docs/DEVELOPER.md` → Interface languages.
 - `composer test` before every commit; `composer docs:screenshots` when the panel, settings or demo content change.
 - Demo: `demo/` (Dockerfile built from the repo root, `entrypoint.sh`, `seed-accounts.php`, `configure.php`). Railway service `Grav` in the project `supertext-cms-demos-php`, https://grav-production.up.railway.app.

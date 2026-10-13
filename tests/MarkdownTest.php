@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Grav\Plugin\SupertextTranslation\Tests;
 
-use Grav\Plugin\SupertextTranslation\Api\HtmlDocument;
 use Grav\Plugin\SupertextTranslation\Markdown\InlineConverter;
 use Grav\Plugin\SupertextTranslation\Markdown\MarkdownDocument;
 use PHPUnit\Framework\TestCase;
+use Supertext\GravTranslation\Sdk\HtmlDocument;
+use Supertext\GravTranslation\Sdk\Segment;
 
 final class MarkdownTest extends TestCase
 {
@@ -126,12 +127,14 @@ final class MarkdownTest extends TestCase
         self::assertSame("![only an image](x.png)\n\n---\n\n`code only`\n\n| 1 | 2 |\n", $doc->render());
     }
 
-    public function testHtmlDocumentRoundTripKeepsUnicode(): void
+    public function testSegmentsSurviveTheSdkPackingWithUnicode(): void
     {
-        $html = HtmlDocument::build([['html' => 'Grüezi <b>mitenand</b> – «Hallo»', 'tag' => 'p'], ['html' => HtmlDocument::text("A & B\nC"), 'tag' => 'h1']], 'en');
-        self::assertStringContainsString('<p data-st-id="0">Grüezi <b>mitenand</b> – «Hallo»</p>', $html);
-        $parsed = HtmlDocument::parse($html);
-        self::assertSame('Grüezi <b>mitenand</b> – «Hallo»', $parsed[0]);
-        self::assertSame("A & B\nC", HtmlDocument::plain($parsed[1]));
+        $doc = MarkdownDocument::parse("Grüezi **mitenand** – «Hallo»\n");
+        $segments = [Segment::html($doc->segments()[0]['html']), Segment::text("A & B\nC")];
+        $html = HtmlDocument::build($segments);
+        self::assertStringContainsString('<div data-st-id="0">Grüezi <b>mitenand</b> – «Hallo»</div>', $html);
+        $parsed = HtmlDocument::parse($html, $segments);
+        self::assertSame("Grüezi **mitenand** – «Hallo»\n", $doc->render([0 => (string)$parsed[0]]));
+        self::assertSame("A & B\nC", $parsed[1]);
     }
 }

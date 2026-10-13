@@ -14,9 +14,11 @@ use Grav\Plugin\SupertextTranslation\Api\SupertextClient;
 use Grav\Plugin\SupertextTranslation\Api\SupertextException;
 use Grav\Plugin\SupertextTranslation\Messages;
 use Grav\Plugin\SupertextTranslation\PageTranslator;
+use Grav\Plugin\SupertextTranslation\PluginVersion;
 use Grav\Plugin\SupertextTranslation\Settings;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Supertext\GravTranslation\Sdk\Client;
 
 /**
  * API routes behind the Supertext panel in the admin2 page editor:
@@ -38,7 +40,7 @@ final class TranslationController extends AbstractApiController
         $settings = $this->settings();
         [$source, $targets] = $this->languages($request, $settings);
 
-        $status = $this->translator($settings)->status($page->path() ?? '', $page->template(), $source, $targets);
+        $status = $this->translator($settings, $request)->status($page->path() ?? '', $page->template(), $source, $targets);
         $languages = [];
         foreach ($status['languages'] as $code => $info) {
             $languages[] = $info + [
@@ -81,7 +83,7 @@ final class TranslationController extends AbstractApiController
 
         @set_time_limit($settings->pollTimeout + 120);
         try {
-            $results = $this->translator($settings)->translate(
+            $results = $this->translator($settings, $request)->translate(
                 $page->path() ?? '',
                 $page->template(),
                 $source,
@@ -170,15 +172,22 @@ final class TranslationController extends AbstractApiController
         return $this->supertextMessages;
     }
 
-    private function translator(Settings $settings): PageTranslator
+    private function translator(Settings $settings, ServerRequestInterface $request): PageTranslator
     {
-        $client = new SupertextClient(
-            $settings->apiKey,
-            baseUrl: $settings->apiUrl,
-            pollInterval: $settings->pollInterval,
-            pollTimeout: $settings->pollTimeout,
-        );
-        return new PageTranslator($client, $settings);
+        try {
+            $sdk = new Client(
+                $settings->apiKey,
+                baseUrl: $settings->apiUrl,
+                pollInterval: (float)$settings->pollInterval,
+                timeout: (float)$settings->pollTimeout,
+                userAgent: 'Grav-Supertext-Translation/' . PluginVersion::get(),
+            );
+        } catch (\LogicException) {
+            // The SDK's built-in transport needs ext-curl.
+            throw new ValidationException($this->messages($request)->reason('no_curl', [], '', 'The PHP curl extension is required to reach Supertext.'));
+        }
+
+        return new PageTranslator(new SupertextClient($sdk), $settings);
     }
 
     private function languageName(string $code): string

@@ -91,7 +91,7 @@ async def main():
         await shot(admin, "grav-languages.png", {"x": 224, "y": 48, "width": WIDTH - 224, "height": 640})
 
         await admin.goto(f"{BASE}/admin/plugins/supertext-translation")
-        await admin.get_by_text("Supertext account").wait_for()
+        await admin.get_by_text("Supertext account", exact=True).wait_for()
         await admin.wait_for_timeout(1000)
         await admin.evaluate("window.scrollTo(0, 340)")
         await admin.wait_for_timeout(500)

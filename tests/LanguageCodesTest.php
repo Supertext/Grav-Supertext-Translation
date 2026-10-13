@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Grav\Plugin\SupertextTranslation\Tests;
 
-use Grav\Plugin\SupertextTranslation\Api\LanguageCodes;
+use Supertext\GravTranslation\Sdk\LanguageCodes;
 use Grav\Plugin\SupertextTranslation\Settings;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Grav language codes => Supertext codes, through the plugin's settings and the bundled SDK's
+ * LanguageCodes (whose own rules are tested in the SDK against the shared test vectors).
+ */
 final class LanguageCodesTest extends TestCase
 {
     /** @return iterable<string, array{string, string, string}> */
@@ -24,7 +28,7 @@ final class LanguageCodesTest extends TestCase
     #[DataProvider('sources')]
     public function testSource(string $code, string $override, string $expected): void
     {
-        self::assertSame($expected, LanguageCodes::source($code, $override));
+        self::assertSame($expected, self::settings($code, $override)->sourceCode($code));
     }
 
     /** @return iterable<string, array{string, string, string}> */
@@ -49,7 +53,7 @@ final class LanguageCodesTest extends TestCase
     #[DataProvider('targets')]
     public function testTarget(string $code, string $override, string $expected): void
     {
-        self::assertSame($expected, LanguageCodes::target($code, $override));
+        self::assertSame($expected, self::settings($code, $override)->supertextCode($code));
     }
 
     public function testEveryDefaultIsRegional(): void
@@ -69,5 +73,10 @@ final class LanguageCodesTest extends TestCase
         self::assertSame('en-GB', $settings->supertextCode('EN'));
         self::assertSame('en', $settings->sourceCode('en'));
         self::assertSame('fr-FR', $settings->supertextCode('fr'));
+    }
+
+    private static function settings(string $code, string $override): Settings
+    {
+        return new Settings(apiKey: 'k', languageCodes: $override !== '' ? [strtolower($code) => $override] : []);
     }
 }

@@ -9,6 +9,8 @@ use Grav\Plugin\SupertextTranslation\PageFile;
 use Grav\Plugin\SupertextTranslation\PageTranslator;
 use Grav\Plugin\SupertextTranslation\Settings;
 use PHPUnit\Framework\TestCase;
+use Supertext\GravTranslation\Sdk\Client;
+use Supertext\GravTranslation\Sdk\Supertext;
 
 final class PageTranslatorTest extends TestCase
 {
@@ -50,7 +52,8 @@ final class PageTranslatorTest extends TestCase
 
     private function makeTranslator(Settings $settings): PageTranslator
     {
-        $client = new SupertextClient('k', $this->api, SupertextClient::DEFAULT_BASE_URL, 1, 60, static function (): void {});
+        $sdk = new Client('k', Supertext::LIVE_BASE_URL, pollInterval: 1.0, timeout: 60.0, transport: $this->api, sleep: static function (): void {});
+        $client = new SupertextClient($sdk);
         return new PageTranslator($client, $settings, static fn(): string => '2026-10-05T20:00:00Z');
     }
 

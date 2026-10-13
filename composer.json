@@ -13,7 +13,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Grav\\Plugin\\SupertextTranslation\\": "classes/"
+            "Grav\\Plugin\\SupertextTranslation\\": "classes/",
+            "Supertext\\GravTranslation\\Sdk\\": "lib/supertext-sdk/src/"
         }
     },
     "autoload-dev": {

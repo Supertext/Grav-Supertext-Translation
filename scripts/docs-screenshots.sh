@@ -26,7 +26,7 @@ cp -a "$WORK/grav/user" "$WORK/seed-user"
 
 # The plugin, as the demo image installs it.
 mkdir -p "$WORK/grav/user/plugins/supertext-translation"
-cp -r supertext-translation.php supertext-translation.yaml blueprints.yaml languages.yaml classes admin-next \
+cp -r supertext-translation.php supertext-translation.yaml blueprints.yaml languages.yaml classes admin-next lib \
   "$WORK/grav/user/plugins/supertext-translation/"
 
 # Throwaway accounts for this local site only.

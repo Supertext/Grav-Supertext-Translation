@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Changed
+
+- The plugin now talks to Supertext through the official Supertext SDK for PHP, bundled with the plugin (`lib/supertext-sdk`, nothing extra to install). Translating into several languages still runs in parallel. Requests carry the plugin version in the User-Agent.
+- A language pair Supertext doesn't offer now gets its own message naming the two languages, in all four interface languages.
+
 ### Fixed
 
 - Target languages without a region (e.g. Grav's `de` without a *Supertext language codes* entry) are now sent to Supertext as a regional code (`de-DE`, `fr-FR`, `en-US`, …), which Supertext requires; mapped codes are normalized (`de_ch` → `de-CH`). The source is always sent without region.

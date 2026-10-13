@@ -14,4 +14,6 @@ parameters:
         - .grav/grav-admin/user/plugins/api/vendor/autoload.php
     scanDirectories:
         - .grav/grav-admin/user/plugins/api/classes
+        # The bundled Supertext SDK: known to PHPStan, not analysed (it is checked in its own repo).
+        - lib/supertext-sdk/src
     tmpDir: .cache/phpstan

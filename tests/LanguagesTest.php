@@ -106,7 +106,7 @@ final class LanguagesTest extends TestCase
     {
         $english = self::strings('en');
         $code = '';
-        foreach (['classes/Api/SupertextClient.php', 'classes/Api/CurlTransport.php', 'classes/PageTranslator.php', 'classes/Controller/TranslationController.php', 'supertext-translation.php'] as $file) {
+        foreach (['classes/Api/SupertextClient.php', 'classes/PageTranslator.php', 'classes/Controller/TranslationController.php', 'supertext-translation.php'] as $file) {
             $code .= file_get_contents(self::ROOT . '/' . $file);
         }
         preg_match_all("/because\\('([a-z_]+)'|=> \\['([a-z_]+)', '|'reason' => (?:\\\$state[^?]*\\? )?'([a-z_]+)'(?: : '([a-z_]+)')?|->reason\\('([a-z_]+)'/", $code, $m);

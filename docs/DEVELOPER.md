@@ -8,12 +8,14 @@ Grav 2 replaced its classic admin with **Admin2**, a single-page app that talks 
 
 | Piece | File | What it does |
 | --- | --- | --- |
-| Plugin class | `supertext-translation.php` | Registers the class autoloader, the API routes (`onApiRegisterRoutes`) and the page-editor panel (`onApiContextPanels`). |
+| Plugin class | `supertext-translation.php` | Registers the class autoloader (the plugin's classes and the bundled SDK), the API routes (`onApiRegisterRoutes`) and the page-editor panel (`onApiContextPanels`). |
 | Panel | `admin-next/panels/supertext-translation.js` | A custom element that Admin2 loads from `GET /api/v1/gpm/plugins/supertext-translation/panel-script` when the toolbar button is clicked. Admin2 sets its `route`, `lang` and `type` attributes; it fires `close` and `badge`. It calls the API with the user's token (`X-API-Token`). |
 | API controller | `classes/Controller/TranslationController.php` | `GET /api/v1/supertext/status?route=…` and `POST /api/v1/supertext/translate` (`{route, languages, overwrite}`). Extends the API plugin's `AbstractApiController`, so authentication, page ACL (`authorizePageAction(…, 'update', 'api.pages.write')`), error format (RFC 7807) and cache invalidation headers work like the core routes. |
-| Translator | `classes/PageTranslator.php` | Reads the source file, builds one HTML document, sends it to Supertext for all target languages, writes `<template>.<lang>.md`, tracks states. Independent of Grav (testable). |
+| Translator | `classes/PageTranslator.php` | Reads the source file, packs the front matter fields (plain text) and the body blocks (HTML) into one document with the SDK's `HtmlDocument`, sends it to Supertext for all target languages, writes `<template>.<lang>.md`, tracks states. Independent of Grav (testable). |
 | Markdown | `classes/Markdown/MarkdownDocument.php`, `InlineConverter.php` | Splits the Markdown body into blocks and back; converts inline Markdown to HTML and back. |
-| Supertext client | `classes/Api/SupertextClient.php`, `HtmlDocument.php`, `CurlTransport.php`, `LanguageCodes.php` | Protocol, retries, HTML packing, language code rules (see *Language codes*). |
+| Supertext SDK | `lib/supertext-sdk/` | The bundled [Supertext SDK for PHP](https://github.com/Supertext/Supertext-API-SDK-and-Guide/tree/main/sdk/php): protocol, retries, HTML packing, language code rules, error codes (see *Supertext API protocol* and *Bundled Supertext SDK*). |
+| Supertext client | `classes/Api/SupertextClient.php`, `SupertextException.php` | The plugin's layer over the SDK: translates into several languages in parallel and turns the SDK's error codes into the plugin's translatable reasons. |
+| Version | `classes/PluginVersion.php` | The version from `blueprints.yaml`, sent to Supertext in the User-Agent (`Grav-Supertext-Translation/<version>`). |
 | Settings | `classes/Settings.php`, `blueprints.yaml`, `supertext-translation.yaml` | Settings with defaults, the Admin2 form, defaults file. |
 | Strings | `languages.yaml`, `classes/Messages.php` | All UI strings in English, German, French and Italian (see *Interface languages* below). `Messages` resolves the admin user's language (the API plugin's `PreferencesResolver`, as its own controllers do) and translates the panel label and the API's messages. |
 
@@ -55,7 +57,7 @@ Because only translatable content is hashed, publishing a translation or changin
 
 ### Rich text and segments
 
-Each block (paragraph, heading, list item, table cell, HTML block line) becomes **one** element with `data-st-id`. Inline formatting is sent as HTML tags inside it (`<b>`, `<i>`, `<s>`, `<a href title>`), so Supertext translates whole sentences and can move the formatting with the words. The translated HTML is converted back to Markdown (`**`, `*`, `~~`, `[text](url "title")`).
+Each block (paragraph, heading, list item, table cell, HTML block line) becomes **one** element with `data-st-id` (the SDK's `HtmlDocument` writes `<div data-st-id="N">`; front matter fields go as plain-text segments). Inline formatting is sent as HTML tags inside it (`<b>`, `<i>`, `<s>`, `<a href title>`), so Supertext translates whole sentences and can move the formatting with the words. The translated HTML is converted back to Markdown (`**`, `*`, `~~`, `[text](url "title")`).
 
 Protected tokens are replaced before sending and restored from the source afterwards, whatever Supertext does with them:
 
@@ -68,7 +70,7 @@ Known simplifications: soft-wrapped paragraph lines are joined into one line; `_
 
 ## Supertext API protocol
 
-AI file translation API v1, same as the WordPress, TYPO3, Strapi and Payload plugins.
+AI file translation API v1, same as the other Supertext plugins. The plugin talks to it through the bundled **Supertext SDK for PHP** (MIT): the SDK implements the steps below, the HTML packing, the language code rules, the 429 retries and stable error codes, and is tested against the shared test vectors of all Supertext SDKs. Protocol fixes go into the SDK, never into this plugin.
 
 | Step | Request |
 | --- | --- |
@@ -80,22 +82,31 @@ AI file translation API v1, same as the WordPress, TYPO3, Strapi and Payload plu
 
 Lessons applied from the live API (October 2026):
 
-- Header `Authorization: Supertext-Auth-Key <key>`; exactly one prefix. A pasted prefix is stripped (`SupertextClient::normalizeKey`).
-- Rate limit per key and second (HTTP 429): retried up to 4 times, honouring `Retry-After`, else 1/2/4/8 s with jitter.
-- All target languages are submitted first, then polled together, so three languages take about as long as one. One failing language doesn't stop the others.
+- Header `Authorization: Supertext-Auth-Key <key>`; exactly one prefix. The SDK strips a pasted prefix (`Settings::normalizeKey()` does the same only to decide whether a key is set).
+- Rate limit per key and second (HTTP 429): the SDK retries up to 4 times, honouring `Retry-After`, else 1/2/4/8 s with jitter.
+- All target languages are submitted first (`submit()`), then each is awaited, downloaded and deleted in turn (`waitUntilDone()`, `download()`, `delete()`), so Supertext works on them in parallel and three languages take about as long as one. One failing language doesn't stop the others; a missing or refused key stops the rest without sending them. Files are always deleted, also after errors.
+- Errors: `Api\SupertextClient::fromSdk()` maps the SDK's error codes (`authentication_failure`, `invalid_language_pair`, `quota_exceeded`, …) to the plugin's reasons (`auth_failed`, `invalid_language_pair`, `limit_exceeded`, …), which `languages.yaml` translates (`ERRORS.<REASON>`). A test checks that every SDK code has a reason.
 - Documents over 900,000 characters are refused before sending.
 
 Verified against the live API on 2026-10-05: the demo's About page into `de-CH` and `fr-CH` in 7 to 9 s (locally and on the Railway demo), with bold text moved correctly inside the translated sentence.
 
 ### Language codes
 
-Learned from the live API: the **source** is the bare language (`en`, `de`), the **target** a regional code (`de-DE`, `fr-CH`, `en-US`). Supertext rejects a bare target such as `de` with `INVALID_LANGUAGE_PAIR`, and a regional source too. `Api\LanguageCodes` applies the rule; `Settings::supertextCode()` (target) and `Settings::sourceCode()` (source) feed it the Grav language codes and the `language_codes` mapping:
+Learned from the live API: the **source** is the bare language (`en`, `de`), the **target** a regional code (`de-DE`, `fr-CH`, `en-US`). Supertext rejects a bare target such as `de` with `INVALID_LANGUAGE_PAIR`, and a regional source too. The SDK's `LanguageCodes` applies the rule (the client applies it again to every request); `Settings::supertextCode()` (target) and `Settings::sourceCode()` (source) feed it the Grav language codes and the `language_codes` mapping:
 
 - Source: the source language (or its mapped code) reduced to the language: `en` → `en`, mapped `en-GB` → `en`.
 - Target: the mapped code if set, otherwise the Grav code. A code with a region keeps it, normalized (`de-ch` / `de_CH` → `de-CH`; scripts and numeric regions stay: `zh-Hant`, `es-419`). A bare code gets a regional default: ar→ar-SA, bg→bg-BG, cs→cs-CZ, da→da-DK, de→de-DE, el→el-GR, en→en-US, es→es-ES, et→et-EE, fi→fi-FI, fr→fr-FR, hr→hr-HR, hu→hu-HU, it→it-IT, ja→ja-JP, ko→ko-KR, lt→lt-LT, lv→lv-LV, nb→nb-NO, nl→nl-NL, pl→pl-PL, pt→pt-PT, ro→ro-RO, ru→ru-RU, sk→sk-SK, sl→sl-SI, sr→sr-RS, sv→sv-SE, th→th-TH, tr→tr-TR, uk→uk-UA, vi→vi-VN, zh→zh-CN (same table as the other Supertext plugins). Unknown bare codes are sent unchanged, so Supertext's error names them.
 - Translating within one language (source `en`, target `en-GB`) is allowed.
 
 `tests/FakeSupertext.php` and the stand-in (`scripts/stand-in-api/router.php`) reject bare targets and regional sources like the real API.
+
+### Bundled Supertext SDK
+
+The plugin ships the SDK in `lib/supertext-sdk/`: its PHP sources, `LICENSE`, `COMMIT` (the SDK commit) and a short README, with the namespace changed from `Supertext\Sdk` to `Supertext\GravTranslation\Sdk`. The plugin's own autoloader in `supertext-translation.php` loads it (Grav doesn't install plugins with Composer); `composer.json` maps it too, for the tests and PHPStan. Sites install only the plugin, and another plugin that brings the SDK itself can't clash with this copy. This stays so after the SDK is published on Packagist.
+
+- Update it with `scripts/vendor-sdk.sh [commit-or-branch]` (default `main`; `SDK_DIR=<clone>` uses a local clone), run `composer test`, and commit with a CHANGELOG entry.
+- Never edit the copy: fix the SDK in its own repository, then re-run the script. PHPStan reads it (`scanDirectories`) but analyses only the plugin's own code.
+- The SDK's built-in HTTP transport uses ext-curl, as the plugin did before.
 
 ## Local setup
 
@@ -121,11 +132,11 @@ SUPERTEXT_API_KEY=stand-in SUPERTEXT_API_URL=http://127.0.0.1:8089/v1/ php -S 12
 
 ## Tests
 
-`composer test` runs PHPUnit (`tests/`). `FakeSupertext` is an in-memory stand-in for the file API.
+`composer test` runs PHPUnit (`tests/`). `FakeSupertext` is an in-memory stand-in for the file API, plugged into the SDK as its `HttpTransport`. The SDK's own protocol tests live in its repository.
 
 - `MarkdownTest`: block splitting, round trips, formatting mapping, protected tokens, escaping.
-- `SupertextClientTest`: protocol order, multipart fields, auth header, 429 retries, error messages, per-language failures, cleanup.
-- `LanguageCodesTest`: language code rules (bare source, regional source → bare, bare target → default region, normalizing, mapping wins, unknown codes unchanged).
+- `SupertextClientTest`: the plugin's use of the SDK: every language submitted before waiting, the request fields the SDK sends, per-language failures, a missing or refused key, cleanup, and every SDK error code mapped to a translatable reason.
+- `LanguageCodesTest`: Grav codes through the settings and the SDK's rules (bare source, regional source → bare, bare target → default region, normalizing, mapping wins, unknown codes unchanged).
 - `PageTranslatorTest`: creating, states (missing/current/outdated/edited/manual), keeping published state, overwrite protection, settings.
 - `LanguagesTest`: `languages.yaml` complete in English, German, French and Italian, and every key used by the settings, the panel and the PHP code present.
 
@@ -171,7 +182,7 @@ Grav has an editor role only as permissions, not as a named role; the editor acc
 
 - **Checks** (`.github/workflows/checks.yml`): on every push and pull request, [actionlint](https://github.com/rhysd/actionlint) and [zizmor](https://docs.zizmor.sh) lint the workflows. On pull requests, dependency review fails a PR that adds a package with a known vulnerability (moderate or worse). Third-party actions are pinned to commit SHAs (Dependabot keeps them current); checkouts don't keep credentials, and workflows get `contents: read` unless a job needs more (the release job: `contents: write`).
 - **Links** (`.github/workflows/links.yml`): [lychee](https://lychee.cli.rs) checks the links in all Markdown files weekly and whenever docs change on `main`. Broken links open or update the issue "Broken links in the docs" (a docs push that breaks links also fails). Links that can't work from CI go in `.lycheeignore` (one regex per line).
-- **PHPStan** (job `phpstan` in `ci.yml`, config `phpstan.neon`): level 5 on the plugin's own code (`supertext-translation.php`, `classes/`), not the tests or `demo/`. Grav isn't a Composer package, so the job unpacks the same Grav + Admin2 release as the demo into `.grav/` (git-ignored); PHPStan reads Grav core and the API plugin's classes from there. Locally:
+- **PHPStan** (job `phpstan` in `ci.yml`, config `phpstan.neon`): level 5 on the plugin's own code (`supertext-translation.php`, `classes/`), not the tests, `demo/` or the bundled SDK (`lib/`, checked in its own repository). Grav isn't a Composer package, so the job unpacks the same Grav + Admin2 release as the demo into `.grav/` (git-ignored); PHPStan reads Grav core and the API plugin's classes from there. Locally:
 
   ```bash
   mkdir .grav && curl -fsSL https://github.com/getgrav/grav/releases/download/2.2.4/grav-admin-v2.2.4.zip -o .grav/grav.zip && unzip -q .grav/grav.zip -d .grav

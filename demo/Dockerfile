@@ -28,6 +28,7 @@ RUN curl -fsSL -o /tmp/grav.zip "https://github.com/getgrav/grav/releases/downlo
 COPY supertext-translation.php supertext-translation.yaml blueprints.yaml CHANGELOG.md LICENSE README.md /var/www/html/user/plugins/supertext-translation/
 COPY classes /var/www/html/user/plugins/supertext-translation/classes
 COPY admin-next /var/www/html/user/plugins/supertext-translation/admin-next
+COPY lib /var/www/html/user/plugins/supertext-translation/lib
 COPY languages.yaml /var/www/html/user/plugins/supertext-translation/
 
 COPY demo /usr/src/demo

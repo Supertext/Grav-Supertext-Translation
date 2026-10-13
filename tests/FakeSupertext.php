@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Grav\Plugin\SupertextTranslation\Tests;
 
-use Grav\Plugin\SupertextTranslation\Api\Transport;
+use Supertext\GravTranslation\Sdk\Http\HttpRequest;
+use Supertext\GravTranslation\Sdk\Http\HttpResponse;
+use Supertext\GravTranslation\Sdk\Http\HttpTransport;
 
 /**
  * In-memory stand-in for the Supertext file API. "Translates" by running a
  * callback over the text nodes of each data-st-id element, like the real API
  * which keeps markup and attributes.
  */
-final class FakeSupertext implements Transport
+final class FakeSupertext implements HttpTransport
 {
     /** @var list<array{method: string, url: string, headers: array<string, string>, body: ?string}> */
     public array $requests = [];
@@ -35,7 +37,18 @@ final class FakeSupertext implements Transport
         $this->translator = $translator ?? static fn(string $text, string $target): string => mb_strtoupper($text);
     }
 
-    public function send(string $method, string $url, array $headers = [], ?string $body = null, int $timeout = 30): array
+    public function send(HttpRequest $request): HttpResponse
+    {
+        $r = $this->handle($request->method, $request->url, $request->headers, $request->body);
+
+        return new HttpResponse($r['status'], $r['body'], $r['headers']);
+    }
+
+    /**
+     * @param array<string, string> $headers
+     * @return array{status: int, headers: array<string, string>, body: string}
+     */
+    private function handle(string $method, string $url, array $headers, ?string $body): array
     {
         $this->requests[] = compact('method', 'url', 'headers', 'body');
         if ($this->queue !== []) {

@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Grav\Plugin\SupertextTranslation;
 
-use Grav\Plugin\SupertextTranslation\Api\HtmlDocument;
 use Grav\Plugin\SupertextTranslation\Api\SupertextClient;
 use Grav\Plugin\SupertextTranslation\Api\SupertextException;
 use Grav\Plugin\SupertextTranslation\Markdown\MarkdownDocument;
+use Supertext\GravTranslation\Sdk\HtmlDocument;
+use Supertext\GravTranslation\Sdk\Segment;
 
 /**
  * Translates one Grav page folder into other languages.
@@ -90,17 +91,17 @@ final class PageTranslator
             $value = $sourcePage->get($field);
             if (is_string($value) && MarkdownDocument::hasText($value)) {
                 $fieldIds[$field] = count($segments);
-                $segments[] = ['html' => HtmlDocument::text($value), 'tag' => $field === 'title' ? 'h1' : 'p'];
+                $segments[] = Segment::text($value);
             }
         }
         $bodyOffset = count($segments);
         foreach ($document->segments() as $segment) {
-            $segments[] = ['html' => $segment['html'], 'tag' => $segment['tag']];
+            $segments[] = Segment::html($segment['html']);
         }
         if ($segments === []) {
             throw SupertextException::because('no_text', 'This page has no text to translate.');
         }
-        $html = HtmlDocument::build($segments, $source);
+        $html = HtmlDocument::build($segments);
 
         $results = [];
         $jobs = [];
@@ -138,7 +139,8 @@ final class PageTranslator
                 continue;
             }
             try {
-                $parsed = HtmlDocument::parse((string)$translated);
+                // Segments missing from the answer stay in the source language.
+                $parsed = array_filter(HtmlDocument::parse((string)$translated, $segments), static fn(?string $t): bool => $t !== null);
                 $existed = is_file($file);
                 $page = $this->buildTranslation($sourcePage, $existed ? PageFile::read($file) : null, $document, $parsed, $fieldIds, $bodyOffset, $lang, $sourceHash);
                 $page->write($file);
@@ -174,7 +176,7 @@ final class PageTranslator
     }
 
     /**
-     * @param array<int, string> $parsed translated segments by id
+     * @param array<int, string> $parsed translated segments by id (front matter fields as plain text, body as HTML)
      * @param array<string, int> $fieldIds front matter field => segment id
      */
     private function buildTranslation(
@@ -202,7 +204,7 @@ final class PageTranslator
         $page = new PageFile($header, '');
         foreach ($fieldIds as $field => $id) {
             if (isset($parsed[$id]) && trim($parsed[$id]) !== '') {
-                $page->set($field, HtmlDocument::plain($parsed[$id]));
+                $page->set($field, $parsed[$id]);
             }
         }
 

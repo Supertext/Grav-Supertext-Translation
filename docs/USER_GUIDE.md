@@ -89,6 +89,7 @@ The messages appear in your admin language; the table lists their English wordin
 | --- | --- |
 | No Supertext API key is configured yet | The administrator still has to enter the Supertext API key. Translating is disabled until then. The message links to Supertext's signup page and to the page where the key is generated (supertext.com → Integrations → API, requires the Admin role). |
 | Supertext refused the API key | The key is wrong or no longer valid. Ask your administrator. |
+| Supertext does not translate from … into … | Supertext doesn't offer this language pair, or the language code for Supertext is set wrongly. Ask your administrator to check the Supertext language codes. |
 | Your Supertext translation limit is exceeded | Your Supertext plan's limit is reached. Contact Supertext or your administrator. |
 | Supertext is busy (too many requests) | Wait a moment and try again. |
 | Supertext took too long to answer | The translation took longer than the configured maximum. Try again; very long pages take longer. |

@@ -141,6 +141,7 @@ The panel, the settings and the plugin's messages are available in English, Germ
 | --- | --- |
 | No Supertext button in the page editor | The plugin is disabled, the browser still has the old admin loaded (reload the page), or the user lacks page permissions. The button only exists in Admin2, not in the classic admin. |
 | "No Supertext API key is configured" | Generate a key (see [API key](#api-key)) and enter it in the settings, or set `SUPERTEXT_API_KEY` for the web server process (not only for your shell). |
+| "Supertext does not translate from … into …" | Supertext doesn't offer that language pair, or a *Supertext language codes* entry is wrong (e.g. `german` instead of `de-CH`). Fix the entry; codes look like `de-CH`, `fr-FR`, `en-US`. |
 | "Supertext refused the API key" | Wrong or revoked key. Copy it again, or generate a new one, at [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api) (requires the Admin role). |
 | "This site has only one language" | Add languages under **Configuration → System → Languages**. |
 | Translations stop after about 30–60 seconds | A proxy or PHP limit ends the request first. Raise `max_execution_time` and the proxy/web-server timeout above *Maximum wait*. |

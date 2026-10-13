@@ -9,12 +9,19 @@ use Grav\Plugin\SupertextTranslation\Controller\TranslationController;
 use Grav\Plugin\SupertextTranslation\Messages;
 use RocketTheme\Toolbox\Event\Event;
 
+// The plugin's classes, and the Supertext SDK it ships (lib/supertext-sdk, own namespace,
+// see docs/DEVELOPER.md → Bundled Supertext SDK).
 spl_autoload_register(static function (string $class): void {
-    $prefix = 'Grav\\Plugin\\SupertextTranslation\\';
-    if (str_starts_with($class, $prefix)) {
-        $file = __DIR__ . '/classes/' . str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';
-        if (is_file($file)) {
-            require $file;
+    foreach ([
+        'Grav\\Plugin\\SupertextTranslation\\' => __DIR__ . '/classes/',
+        'Supertext\\GravTranslation\\Sdk\\' => __DIR__ . '/lib/supertext-sdk/src/',
+    ] as $prefix => $dir) {
+        if (str_starts_with($class, $prefix)) {
+            $file = $dir . str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';
+            if (is_file($file)) {
+                require $file;
+            }
+            return;
         }
     }
 });

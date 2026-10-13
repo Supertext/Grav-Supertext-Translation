@@ -60,6 +60,7 @@ en:
       TIMEOUT: Supertext took too long to answer. Please try again.
       NO_RESULT: No translation was returned.
       NO_FILE_ID: Supertext did not accept the page (no file id returned).
+      INVALID_LANGUAGE_PAIR: 'Supertext does not translate from %s into %s. Check the Supertext language codes in the plugin settings.'
       NOT_FOUND: Supertext could not find the requested file.
       RATE_LIMITED: Supertext is busy (too many requests). Please try again in a moment.
       UNAVAILABLE: The Supertext service is currently unavailable. Please try again later.
@@ -164,6 +165,7 @@ de:
       TIMEOUT: Supertext hat zu lange nicht geantwortet. Bitte versuchen Sie es noch einmal.
       NO_RESULT: Es wurde keine Übersetzung zurückgegeben.
       NO_FILE_ID: Supertext hat die Seite nicht angenommen (keine Datei-ID zurückgegeben).
+      INVALID_LANGUAGE_PAIR: 'Supertext übersetzt nicht von %s nach %s. Prüfen Sie die Supertext-Sprachcodes in den Plugin-Einstellungen.'
       NOT_FOUND: Supertext konnte die angeforderte Datei nicht finden.
       RATE_LIMITED: Supertext ist ausgelastet (zu viele Anfragen). Bitte versuchen Sie es gleich noch einmal.
       UNAVAILABLE: Der Supertext-Dienst ist zurzeit nicht verfügbar. Bitte versuchen Sie es später noch einmal.
@@ -268,6 +270,7 @@ fr:
       TIMEOUT: Supertext a mis trop de temps à répondre. Veuillez réessayer.
       NO_RESULT: Aucune traduction n’a été renvoyée.
       NO_FILE_ID: Supertext n’a pas accepté la page (aucun identifiant de fichier renvoyé).
+      INVALID_LANGUAGE_PAIR: 'Supertext ne traduit pas de %s vers %s. Vérifiez les codes de langue Supertext dans les réglages du plugin.'
       NOT_FOUND: Supertext n’a pas trouvé le fichier demandé.
       RATE_LIMITED: Supertext est occupé (trop de requêtes). Veuillez réessayer dans un instant.
       UNAVAILABLE: Le service Supertext est actuellement indisponible. Veuillez réessayer plus tard.
@@ -372,6 +375,7 @@ it:
       TIMEOUT: Supertext ha impiegato troppo tempo a rispondere. Riprovi.
       NO_RESULT: Non è stata restituita alcuna traduzione.
       NO_FILE_ID: Supertext non ha accettato la pagina (nessun ID file restituito).
+      INVALID_LANGUAGE_PAIR: 'Supertext non traduce da %s a %s. Verifichi i codici lingua Supertext nelle impostazioni del plugin.'
       NOT_FOUND: Supertext non ha trovato il file richiesto.
       RATE_LIMITED: Supertext è occupato (troppe richieste). Riprovi tra un momento.
       UNAVAILABLE: Il servizio Supertext non è al momento disponibile. Riprovi più tardi.
