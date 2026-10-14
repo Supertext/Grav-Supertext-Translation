@@ -58,6 +58,8 @@ You can store it in one of two places:
 
 Only users who can change plugin settings (super administrators) see or change the key. Editors never see it.
 
+Every time you save the plugin settings, the plugin checks the key with Supertext (a cost-free request, nothing is translated or billed) and shows the result under **API key check**, with the time of the check. **Check again** runs the check right away, for example after you changed `SUPERTEXT_API_KEY`. A key from the environment is also checked automatically when it changes. An invalid key never stops the settings from being saved; see [Troubleshooting](#troubleshooting) for the messages.
+
 ## Language setup
 
 Grav keeps each language of a page in its own file (`default.en.md`, `default.de.md`, …). Set up the languages in **Configuration → System → Languages**:
@@ -83,20 +85,58 @@ languages:
 
 Grav's own theme has no language menu; visitors reach the languages under `/de/`, `/fr/` etc. Add a language switcher to your theme if you need one.
 
+### Supertext languages
+
+Supertext needs to know exactly which language variant each site language is: Swiss or German German, British or American English. The plugin never guesses. Under **Plugins → Supertext Translation → Supertext language codes** every site language has a list of the languages Supertext offers:
+
+![The Languages section of the plugin settings: source language en; Supertext language codes with one list per site language: English (source language, sent as en), Deutsch → German (Switzerland) (de-CH), Français → French (Switzerland) (fr-CH)](images/plugin-languages.png)
+
+- A Grav code that is exactly a Supertext code is chosen automatically: `de-ch` → `de-CH`, `es` → `es`, `nl` → `nl`.
+- A bare `de`, `en`, `fr`, `it` or `pt` has no automatic choice, because Supertext only offers them with a region. Choose the variant, e.g. `de` → *German (Switzerland) (de-CH)*. Until you do, the row says **Not mapped** and editors can't translate into that language (the panel shows it greyed out).
+- The source language uses the same list: a source mapped to `de-CH` is sent as `de`. A bare source code such as `en` needs no choice.
+- Save the settings after changing the list.
+
+The languages Supertext offers (October 2026):
+
+| Language | Supertext codes |
+| --- | --- |
+| German | `de-CH`, `de-DE`, `de-AT` |
+| English | `en-GB`, `en-US` |
+| French | `fr-CH`, `fr-FR` |
+| Italian | `it-CH`, `it-IT` |
+| Portuguese | `pt-BR`, `pt-PT` |
+| Chinese | `zh-Hans` (Simplified), `zh-Hant` (Traditional) |
+| Serbian | `sr-Latn` (Latin), `sr-Cyrl` (Cyrillic) |
+| Swiss German | `gsw-u-sd-chzh` (Zurich), `gsw-u-sd-chbe` (Bern) |
+| All others, without region | `bg`, `cs`, `da`, `el`, `es`, `fi`, `hr`, `hu`, `ja`, `ko`, `nb`, `nl`, `pl`, `rm`, `ru`, `sk`, `sl`, `sq`, `sv`, `tr` |
+
+Supertext rejects other forms, e.g. `es-ES`, `sl-SI` or `zh-CN`. Formal and informal address (*Form of address*) exist for all of them except English, Romansh (`rm`), Albanian (`sq`), Serbian and Swiss German; those always get Supertext's default, and the language list says so next to them.
+
+In YAML, the setting is a map of Grav codes to Supertext codes:
+
+```yaml
+language_codes:
+  de: de-CH
+  fr: fr-CH
+  en: en-GB
+```
+
 ## Settings
 
 All settings are in **Plugins → Supertext Translation**:
 
-![The Supertext Translation plugin settings in Admin2: API key, API endpoint https://api.supertext.com/v1/, source language en, and Supertext language codes de → de-CH and fr → fr-CH](images/plugin-settings.png)
+![The Supertext Translation plugin settings in Admin2, section Supertext account: API key with the account and API key links, API key check "API key checked: the connection to Supertext works." with its time and a Check again button, API endpoint https://api.supertext.com/v1/, and Send version information to Supertext set to Enabled](images/plugin-settings.png)
 
 | Setting | YAML key | Default | What it does |
 | --- | --- | --- | --- |
 | Plugin status | `enabled` | enabled | Turns the plugin (button and API routes) on or off. |
 | API key | `api_key` | empty | Your Supertext API key. Empty: the `SUPERTEXT_API_KEY` environment variable is used. |
+| API key check | – | – | Shows the latest automatic check of the key (not a setting). **Check again** checks it now. |
 | API endpoint | `api_url` | `https://api.supertext.com/v1/` | Only change it if Supertext tells you to. |
+| Send version information to Supertext | `version_reports` | enabled | Sends the site URL and the versions of this plugin, Grav and PHP to Supertext when you save these settings and after an update, so Supertext support can see which version you run. No content, no API key and no personal data. See [Version information](#version-information-and-the-ping-address). The environment variable `SUPERTEXT_VERSION_REPORTS=0` turns it off (and `1` on) whatever the setting says. |
 | Source language | `source_language` | empty | Grav language code the translations are made from. Empty: the site's default language. |
-| Supertext language codes | `language_codes` | none | Which language variant Supertext translates into, per Grav language, e.g. `de` → `de-CH` (Swiss German, no "ß"), `fr` → `fr-CH`. Without an entry the Grav code is sent with a region, which Supertext requires for target languages: `de-ch` becomes `de-CH`, and a code without region gets a default, e.g. `de` → `de-DE`, `fr` → `fr-FR`, `en` → `en-US` (full list in the [developer guide](DEVELOPER.md#language-codes)). The source language is always sent without region. |
-| Form of address | `politeness` | Supertext default | *Formal* (Sie, vous) or *Informal* (du, tu), for languages that have both. |
+| Supertext language codes | `language_codes` | none | The Supertext language of each site language, e.g. `de` → `de-CH` (Swiss German, no "ß"), `fr` → `fr-CH`. A Grav code that is exactly a Supertext code (`es`, `nl`, `de-CH`) needs no entry; a bare `de`, `en`, `fr`, `it` or `pt` does. Without one, that language can't be translated. See [Supertext languages](#supertext-languages). |
+| Form of address | `politeness` | Supertext default | *Formal* (Sie, vous) or *Informal* (du, tu), for the languages Supertext offers both for. Languages without the choice (English, Romansh, Albanian, Serbian, Swiss German) always get Supertext's default. |
 | Front matter fields | `header_fields` | `title`, `menu`, `metadata.description` | Fields of the page header translated together with the content. Use dots for nested fields. Only text values are translated. |
 | Publish new translations | `publish_new_translations` | off | Off: new translations are created with `published: false` so editors can review them. On: they are published right away. Updating an existing translation never changes whether it is published. |
 | Status check interval | `poll_interval` | 2 | Seconds between checks while Supertext translates. |
@@ -114,7 +154,24 @@ language_codes:
 politeness: default
 header_fields: [title, menu, metadata.description]
 publish_new_translations: false
+version_reports: true  # or SUPERTEXT_VERSION_REPORTS=0 to turn it off
 ```
+
+## Version information and the ping address
+
+So that Supertext support knows which versions are in use, the plugin sends a short report to Supertext (the Supertext Commando Center):
+
+- **When:** after you save the plugin settings, and after an update of the plugin, Grav or PHP (noticed the next time someone opens the Supertext panel, translates or opens the plugin settings). It is sent after the page has been delivered, never slows down the admin, and a failed report is simply tried again an hour later.
+- **What:** the site URL (as Grav knows it), the versions of the plugin, Grav, PHP and the bundled Supertext SDK, whether an API key is set, the result of the latest API key check (*ok*, *invalid*, *missing*, *unreachable*, *error*, with the HTTP status), and the ping address below. **Never** page content, the API key itself or personal data. (The key's SHA-256 fingerprint is kept on your server, in `user/data/supertext-translation/reporter.json`, only to notice that the key changed; it is never sent.)
+- **Turn it off:** set **Send version information to Supertext** to *Disabled* and save, or set the environment variable `SUPERTEXT_VERSION_REPORTS=0` for the web server (with Apache and `mod_php`: `PassEnv SUPERTEXT_VERSION_REPORTS`). Then nothing is sent. The API key check on the settings page keeps working.
+
+**Ping address.** So that Supertext can check whether your site can be reached from the internet, the plugin answers a public address:
+
+```
+https://<your site>/api/v1/supertext/ping?challenge=<random text>
+```
+
+It needs no login and answers only with `{"ok":true,"plugin":"Grav-Supertext-Translation","challenge":"…"}`: no versions, no settings, no content. While version information is off it answers HTTP 404. If you changed the API plugin's route (`plugins.api.route`), the address follows it. A firewall, maintenance mode or a login wall in front of `/api/` makes the site show as "not reachable" at Supertext; the plugin works either way.
 
 ## Who can translate
 
@@ -140,12 +197,19 @@ The panel, the settings and the plugin's messages are available in English, Germ
 | Problem | Cause and fix |
 | --- | --- |
 | No Supertext button in the page editor | The plugin is disabled, the browser still has the old admin loaded (reload the page), or the user lacks page permissions. The button only exists in Admin2, not in the classic admin. |
+| "No API key is set yet" (API key check) | Enter a key and save, or set `SUPERTEXT_API_KEY` for the web server process. |
+| "Supertext rejected the API key" (API key check) | The key is wrong, incomplete or revoked: copy it again, or generate a new one at [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api) (requires the Admin role). The settings are saved anyway. |
+| "The API key couldn't be checked because Supertext can't be reached" | The server can't reach `api.supertext.com` (firewall, proxy, DNS) or Supertext is down. Press **Check again** later. |
+| "The API key couldn't be checked: Supertext answered with an error (…)" | Supertext answered unexpectedly, e.g. HTTP 429 (too many requests). Press **Check again** later. |
+| "Not mapped" next to a language, or "The language … has no Supertext language yet" | Choose the Supertext language for it under **Supertext language codes** and save (see [Supertext languages](#supertext-languages)). |
+| "Supertext offers no formal or informal tone for this language" | The language is mapped to a code the plugin doesn't know, and Supertext refused the form of address for it. Set **Form of address** to *Supertext default*, or map the language to one of the listed codes. |
 | "No Supertext API key is configured" | Generate a key (see [API key](#api-key)) and enter it in the settings, or set `SUPERTEXT_API_KEY` for the web server process (not only for your shell). |
-| "Supertext does not translate from … into …" | Supertext doesn't offer that language pair, or a *Supertext language codes* entry is wrong (e.g. `german` instead of `de-CH`). Fix the entry; codes look like `de-CH`, `fr-FR`, `en-US`. |
+| "Supertext does not translate from … into …" | Supertext doesn't offer that language pair, or a *Supertext language codes* entry in the YAML file is wrong (e.g. `german` or `es-ES` instead of `de-CH` or `es`). Choose the language from the list in the settings. |
 | "Supertext refused the API key" | Wrong or revoked key. Copy it again, or generate a new one, at [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api) (requires the Admin role). |
 | "This site has only one language" | Add languages under **Configuration → System → Languages**. |
 | Translations stop after about 30–60 seconds | A proxy or PHP limit ends the request first. Raise `max_execution_time` and the proxy/web-server timeout above *Maximum wait*. |
 | "Could not reach Supertext" | The server can't make outgoing HTTPS requests to `api.supertext.com` (firewall, proxy, missing CA certificates). |
 | "Cannot write default.de.md" | The web server user can't write to the page folder. Fix the folder permissions. |
 | Visitors don't see the translation | New translations are unpublished. Publish them, and clear the cache if needed. |
+| The ping address answers 404 | Version information is off (setting or `SUPERTEXT_VERSION_REPORTS=0`), or the plugin is disabled. |
 | Errors in more detail | Failed translations are logged in `logs/grav.log` with the page and language. |

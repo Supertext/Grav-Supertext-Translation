@@ -7,9 +7,9 @@ namespace Grav\Plugin\SupertextTranslation\Tests;
 use Grav\Plugin\SupertextTranslation\Api\SupertextClient;
 use Grav\Plugin\SupertextTranslation\Api\SupertextException;
 use PHPUnit\Framework\TestCase;
-use Supertext\GravTranslation\Sdk\Client;
-use Supertext\GravTranslation\Sdk\Supertext;
-use Supertext\GravTranslation\Sdk\SupertextException as SdkException;
+use Supertext\GravTranslation\Sdk\V1\Client;
+use Supertext\GravTranslation\Sdk\V1\Protocol;
+use Supertext\GravTranslation\Sdk\V1\SupertextException as SdkException;
 
 /**
  * The plugin's layer over the bundled SDK. The protocol itself (auth header, multipart,
@@ -23,7 +23,7 @@ final class SupertextClientTest extends TestCase
 
     private function client(FakeSupertext $api, string $key = 'secret'): SupertextClient
     {
-        $sdk = new Client($key, Supertext::LIVE_BASE_URL, pollInterval: 2.0, timeout: 300.0, transport: $api, sleep: function (float $s): void {
+        $sdk = new Client($key, Protocol::LIVE_BASE_URL, pollInterval: 2.0, timeout: 300.0, transport: $api, sleep: function (float $s): void {
             $this->sleeps[] = $s;
         });
 
@@ -52,12 +52,13 @@ final class SupertextClientTest extends TestCase
     {
         $api = new FakeSupertext();
         $this->client($api, '  Supertext-Auth-Key abc+/=  ')->translateMany([
-            'de' => ['html' => '<div data-st-id="0">x</div>', 'target' => 'de', 'source' => 'en-GB', 'politeness' => 'more'],
+            'de' => ['html' => '<div data-st-id="0">x</div>', 'target' => 'de-CH', 'source' => 'en', 'politeness' => 'more'],
         ]);
         $post = $api->requests[0];
         self::assertSame('Supertext-Auth-Key abc+/=', $post['headers']['Authorization']);
-        self::assertStringContainsString("name=\"target_lang\"\r\n\r\nde-DE\r\n", (string)$post['body'], 'bare target gets a region');
-        self::assertStringContainsString("name=\"source_lang\"\r\n\r\nen\r\n", (string)$post['body'], 'source sent bare');
+        // The codes are sent as given: Settings resolves them (LanguageCodesTest), nothing is guessed.
+        self::assertStringContainsString("name=\"target_lang\"\r\n\r\nde-CH\r\n", (string)$post['body']);
+        self::assertStringContainsString("name=\"source_lang\"\r\n\r\nen\r\n", (string)$post['body']);
         self::assertStringContainsString("name=\"politeness\"\r\n\r\nmore\r\n", (string)$post['body']);
         self::assertStringContainsString("Content-Type: text/html\r\n\r\n", (string)$post['body']);
         self::assertStringStartsWith('supertext-sdk-php', $post['headers']['User-Agent'] ?? '');
@@ -68,8 +69,8 @@ final class SupertextClientTest extends TestCase
         $api = new FakeSupertext();
         $api->failFor['fr-FR'] = 'limit_exceeded';
         $result = $this->client($api)->translateMany([
-            'de' => ['html' => '<div data-st-id="0">x</div>', 'target' => 'de'],
-            'fr' => ['html' => '<div data-st-id="0">x</div>', 'target' => 'fr'],
+            'de' => ['html' => '<div data-st-id="0">x</div>', 'target' => 'de-CH'],
+            'fr' => ['html' => '<div data-st-id="0">x</div>', 'target' => 'fr-FR'],
         ]);
         self::assertIsString($result['de']);
         self::assertInstanceOf(SupertextException::class, $result['fr']);
@@ -104,6 +105,7 @@ final class SupertextClientTest extends TestCase
         self::assertSame('auth_failed', $result['de']->reason);
         self::assertSame('auth_failed', $result['fr']->reason);
         self::assertSame('', $result['de']->detail, 'nothing from the answer next to a key error');
+        self::assertSame(403, $result['de']->status, 'the status marks the key as rejected for the Commando Center');
         self::assertCount(1, $api->requests);
     }
 
@@ -139,6 +141,9 @@ final class SupertextClientTest extends TestCase
         yield 'timeout' => [new SdkException(SdkException::TIMEOUT), 'timeout', []];
         yield 'too large' => [new SdkException(SdkException::PAYLOAD_TOO_LARGE, 413), 'too_long', []];
         yield 'empty' => [new SdkException(SdkException::INCOMPLETE_RESPONSE), 'empty', []];
+        yield 'not mapped target' => [new SdkException(SdkException::UNSUPPORTED_LANGUAGE, targetLang: 'de'), 'unsupported_language', ['de']];
+        yield 'not mapped source' => [new SdkException(SdkException::UNSUPPORTED_LANGUAGE, sourceLang: 'xx'), 'unsupported_language', ['xx']];
+        yield 'no formal/informal' => [new SdkException(SdkException::UNSUPPORTED_FEATURE, 400, 'FEATURE_ERROR', 'FEATURE_ERROR', feature: 'politeness'), 'unsupported_feature', []];
     }
 
     /** @param list<string|int> $args */

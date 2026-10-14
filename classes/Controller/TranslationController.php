@@ -15,10 +15,13 @@ use Grav\Plugin\SupertextTranslation\Api\SupertextException;
 use Grav\Plugin\SupertextTranslation\Messages;
 use Grav\Plugin\SupertextTranslation\PageTranslator;
 use Grav\Plugin\SupertextTranslation\PluginVersion;
+use Grav\Plugin\SupertextTranslation\Reporting\GravReporting;
+use Grav\Plugin\SupertextTranslation\Reporting\Reporting;
 use Grav\Plugin\SupertextTranslation\Settings;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Supertext\GravTranslation\Sdk\Client;
+use Supertext\GravTranslation\Sdk\V1\Client;
+use Supertext\GravTranslation\Sdk\V1\Languages;
 
 /**
  * API routes behind the Supertext panel in the admin2 page editor:
@@ -27,6 +30,9 @@ use Supertext\GravTranslation\Sdk\Client;
  *   POST /api/v1/supertext/translate                {route, languages: [de, fr], overwrite: false}
  *
  * Both need the same rights as editing the page (api.pages.write, or a page-level grant).
+ * After the response, both let the Supertext reporter look for an update or a changed API key
+ * (Reporting::ON_REQUEST); a translation that Supertext refused with 401/403 marks the key as
+ * rejected (Reporting::AUTHENTICATION_FAILED).
  */
 final class TranslationController extends AbstractApiController
 {
@@ -43,12 +49,16 @@ final class TranslationController extends AbstractApiController
         $status = $this->translator($settings, $request)->status($page->path() ?? '', $page->template(), $source, $targets);
         $languages = [];
         foreach ($status['languages'] as $code => $info) {
+            $target = $settings->targetCodeOrNull($code);
             $languages[] = $info + [
                 'code' => $code,
                 'name' => $this->languageName($code),
-                'supertext_code' => $settings->supertextCode($code),
+                // null: no Supertext language mapped yet, the panel can't translate into it
+                'supertext_code' => $target,
+                'politeness_supported' => $target !== null ? Languages::supportsPoliteness($target) : null,
             ];
         }
+        GravReporting::create($this->grav, $settings)->runLater(Reporting::ON_REQUEST, $settings->apiKey);
 
         return ApiResponse::create([
             'route' => $page->rawRoute(),
@@ -56,7 +66,7 @@ final class TranslationController extends AbstractApiController
             'multilanguage' => count($targets) > 1,
             'api_key_configured' => $settings->apiKey !== '',
             'translated_fields' => $settings->headerFields,
-            'source' => $status['source'] + ['name' => $this->languageName($source)],
+            'source' => $status['source'] + ['name' => $this->languageName($source), 'supertext_code' => $settings->sourceCodeOrNull($source)],
             'languages' => $languages,
         ]);
     }
@@ -82,6 +92,7 @@ final class TranslationController extends AbstractApiController
         }
 
         @set_time_limit($settings->pollTimeout + 120);
+        $reporting = GravReporting::create($this->grav, $settings);
         try {
             $results = $this->translator($settings, $request)->translate(
                 $page->path() ?? '',
@@ -91,12 +102,17 @@ final class TranslationController extends AbstractApiController
                 filter_var($body['overwrite'] ?? false, FILTER_VALIDATE_BOOLEAN),
             );
         } catch (SupertextException $e) {
+            $reporting->runLater(Reporting::ON_REQUEST, $settings->apiKey);
             throw new ValidationException($messages->error($e));
         }
 
+        $rejected = null; // HTTP status of a translation Supertext refused because of the key
         $written = false;
         $out = [];
         foreach ($results as $code => $result) {
+            if (in_array($result['status'] ?? null, [401, 403], true)) {
+                $rejected = $result['status'];
+            }
             $written = $written || in_array($result['result'], ['created', 'updated'], true);
             if ($result['result'] === 'error') {
                 $this->grav['log']->warning(sprintf('Supertext: translating %s into %s failed: %s', $page->rawRoute(), $code, $result['message']));
@@ -104,12 +120,15 @@ final class TranslationController extends AbstractApiController
             if (($result['reason'] ?? '') !== '') {
                 $result['message'] = $messages->reason($result['reason'], $result['args'] ?? [], $result['detail'] ?? '', $result['message']);
             }
-            unset($result['reason'], $result['args'], $result['detail']);
+            unset($result['reason'], $result['args'], $result['detail'], $result['status']);
             $out[] = $result + ['code' => $code, 'name' => $this->languageName($code)];
         }
         if ($written) {
             $this->clearCache();
         }
+        $rejected !== null
+            ? $reporting->runLater(Reporting::AUTHENTICATION_FAILED, $settings->apiKey, $rejected)
+            : $reporting->runLater(Reporting::ON_REQUEST, $settings->apiKey);
 
         $route = $page->rawRoute();
         return ApiResponse::create(
@@ -135,13 +154,7 @@ final class TranslationController extends AbstractApiController
 
     private function settings(): Settings
     {
-        $key = getenv('SUPERTEXT_API_KEY');
-        $url = getenv('SUPERTEXT_API_URL');
-        return Settings::fromArray(
-            (array)$this->config->get('plugins.supertext-translation', []),
-            $key === false ? null : $key,
-            $url === false ? null : $url,
-        );
+        return Settings::fromConfig((array)$this->config->get('plugins.supertext-translation', []));
     }
 
     /** @return array{0: string, 1: list<string>} source language and all site languages */

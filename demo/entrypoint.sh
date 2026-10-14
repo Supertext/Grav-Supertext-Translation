@@ -45,7 +45,11 @@ a2enmod -q mpm_prefork >/dev/null 2>&1 || true
 sed -i "s/^Listen .*/Listen ${PORT:-8080}/" /etc/apache2/ports.conf
 sed -i "s/<VirtualHost \*:[0-9]*>/<VirtualHost *:${PORT:-8080}>/" /etc/apache2/sites-available/000-default.conf
 
-# Hand SUPERTEXT_API_KEY to PHP under Apache.
-[ -n "$SUPERTEXT_API_KEY" ] && echo "PassEnv SUPERTEXT_API_KEY" > /etc/apache2/conf-enabled/supertext-env.conf || rm -f /etc/apache2/conf-enabled/supertext-env.conf
+# Hand the SUPERTEXT_* variables that are set to PHP under Apache.
+rm -f /etc/apache2/conf-enabled/supertext-env.conf
+for name in SUPERTEXT_API_KEY SUPERTEXT_VERSION_REPORTS SUPERTEXT_REPORT_URL; do
+  eval "value=\${$name:-}"
+  [ -z "$value" ] || echo "PassEnv $name" >> /etc/apache2/conf-enabled/supertext-env.conf
+done
 
 exec apache2-foreground

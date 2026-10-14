@@ -40,6 +40,14 @@ async def panel_clip(page):
     return {"x": box["x"], "y": 0, "width": box["width"], "height": min(HEIGHT, height)}
 
 
+async def scroll_to_text(page, text):
+    """Scrolls the settings form so that the section title is near the top."""
+    await page.get_by_text(text, exact=True).first.evaluate(
+        "el => { el.scrollIntoView({block: 'start'}); const s = document.scrollingElement; if (s) s.scrollBy(0, -70); "
+        "let p = el.parentElement; while (p) { if (p.scrollHeight > p.clientHeight + 10 && getComputedStyle(p).overflowY !== 'visible') { p.scrollBy(0, -70); break; } p = p.parentElement; } }")
+    await page.wait_for_timeout(500)
+
+
 async def open_page(page, route):
     await page.goto(f"{BASE}/admin/pages/edit/{route}")
     await page.get_by_role("button", name="Supertext translation").wait_for()
@@ -92,10 +100,17 @@ async def main():
 
         await admin.goto(f"{BASE}/admin/plugins/supertext-translation")
         await admin.get_by_text("Supertext account", exact=True).wait_for()
+        # The key check (supertext-status field) and the language rows (supertext-languages field).
+        await admin.locator("[data-testid=supertext-key-check]").wait_for()
+        await admin.locator("grav-supertext-translation--supertext-languages select").first.wait_for()
+        # "Check again" runs the API key check against the stand-in (on a real site it runs on every save).
+        await admin.locator("grav-supertext-translation--supertext-status button[data-action=check]").click()
+        await admin.locator("[data-testid=supertext-key-check][data-status=ok]").wait_for()
         await admin.wait_for_timeout(1000)
-        await admin.evaluate("window.scrollTo(0, 340)")
-        await admin.wait_for_timeout(500)
+        await scroll_to_text(admin, "Supertext account")
         await shot(admin, "plugin-settings.png", {"x": 224, "y": 0, "width": WIDTH - 224, "height": HEIGHT})
+        await scroll_to_text(admin, "Languages")
+        await shot(admin, "plugin-languages.png", {"x": 224, "y": 0, "width": WIDTH - 224, "height": 620})
 
         # ── Editor: translate a page ───────────────────────────────────────
         editor = await browser.new_page(viewport={"width": WIDTH, "height": HEIGHT}, device_scale_factor=1)

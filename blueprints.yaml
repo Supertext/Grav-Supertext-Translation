@@ -50,11 +50,30 @@ form:
       validate:
         max: 1024
 
+    # Read-only: the latest automatic API key check (admin-next/fields/supertext-status.js).
+    supertext_status:
+      type: supertext-status
+      label: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.KEY_CHECK
+      validate:
+        ignore: true
+
     api_url:
       type: text
       label: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.API_URL
       default: 'https://api.supertext.com/v1/'
       help: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.API_URL_HELP
+
+    version_reports:
+      type: toggle
+      label: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.VERSION_REPORTS
+      description: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.VERSION_REPORTS_HELP
+      highlight: 1
+      default: 1
+      options:
+        1: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.ENABLED
+        0: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.DISABLED
+      validate:
+        type: bool
 
     languages_section:
       type: section
@@ -67,12 +86,13 @@ form:
       placeholder: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.SOURCE_LANGUAGE_PLACEHOLDER
       help: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.SOURCE_LANGUAGE_HELP
 
+    # Grav language => Supertext code, one select per site language (admin-next/fields/supertext-languages.js).
     language_codes:
-      type: array
+      type: supertext-languages
       label: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.LANGUAGE_CODES
-      placeholder_key: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.LANGUAGE_CODES_KEY
-      placeholder_value: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.LANGUAGE_CODES_VALUE
-      help: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.LANGUAGE_CODES_HELP
+      description: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.LANGUAGE_CODES_HELP
+      validate:
+        type: array
 
     politeness:
       type: select

@@ -26,8 +26,8 @@ jobs:
       - run: composer install --no-interaction --no-progress
       - name: Lint PHP
         run: find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l > /dev/null
-      - name: Check panel script
-        run: node --check admin-next/panels/supertext-translation.js
+      - name: Check panel and field scripts
+        run: for f in admin-next/panels/*.js admin-next/fields/*.js; do node --check "$f"; done
       - run: composer test
 
   phpstan:

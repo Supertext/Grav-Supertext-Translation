@@ -102,6 +102,37 @@ final class LanguagesTest extends TestCase
         }
     }
 
+    public function testFieldStringsExistAndMatchTheEnglishFallback(): void
+    {
+        $strings = [];
+        foreach (self::strings('en') as $key => $text) {
+            if (str_starts_with($key, 'ICU.' . self::PREFIX . 'FIELDS.')) {
+                $strings[substr($key, strlen('ICU.' . self::PREFIX . 'FIELDS.'))] = $text;
+            }
+        }
+        $files = glob(self::ROOT . '/admin-next/fields/*.js') ?: [];
+        self::assertCount(2, $files);
+        $usedAnywhere = [];
+        foreach ($files as $file) {
+            $js = (string)file_get_contents($file);
+            self::assertMatchesRegularExpression('/const EN = \{\n(.*?)\n\};/s', $js, basename($file));
+            preg_match('/const EN = \{\n(.*?)\n\};/s', $js, $block);
+            preg_match_all("/^    ([A-Z_]+): '((?:[^'\\\\]|\\\\.)*)',$/m", $block[1], $entries, PREG_SET_ORDER);
+            $fallback = [];
+            foreach ($entries as $entry) {
+                $fallback[$entry[1]] = stripslashes($entry[2]);
+                self::assertSame($strings[$entry[1]] ?? null, $fallback[$entry[1]], basename($file) . ' ' . $entry[1]);
+            }
+            preg_match_all("/\\bt\\('([A-Z_]+)'|\\bt\\(([A-Z_]+)\\b|'(KEYCHECK_[A-Z]+|REPORTS_ENV_[A-Z]+|CHECKING|CHECK_AGAIN)'/", $js, $m);
+            $used = array_unique(array_filter(array_merge($m[1], $m[3])));
+            foreach ($used as $key) {
+                self::assertArrayHasKey($key, $fallback, basename($file) . ' uses ' . $key);
+            }
+            $usedAnywhere = array_merge($usedAnywhere, array_keys($fallback));
+        }
+        self::assertSame([], array_values(array_diff(array_keys($strings), $usedAnywhere)), 'every FIELDS string is used by a field');
+    }
+
     public function testEveryMessageOfThePhpCodeExists(): void
     {
         $english = self::strings('en');

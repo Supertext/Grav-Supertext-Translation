@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Grav\Plugin\SupertextTranslation\Api;
 
-use Supertext\GravTranslation\Sdk\Client;
-use Supertext\GravTranslation\Sdk\Supertext;
-use Supertext\GravTranslation\Sdk\SupertextException as SdkException;
+use Supertext\GravTranslation\Sdk\V1\Client;
+use Supertext\GravTranslation\Sdk\V1\Protocol;
+use Supertext\GravTranslation\Sdk\V1\SupertextException as SdkException;
 
 /**
  * The plugin's use of the bundled Supertext SDK (lib/supertext-sdk).
  *
- * The SDK does the protocol: auth header, multipart upload, language codes, 429 retries,
+ * The SDK does the protocol: auth header, multipart upload, 429 retries,
  * polling and deleting the file. This class only adds what Grav needs on top:
  *
  * - Several languages at once: every target is submitted first, then each one is awaited
@@ -27,6 +27,8 @@ final class SupertextClient
         SdkException::MISSING_API_KEY => ['no_api_key', 'No Supertext API key is configured. An administrator can add it in the plugin settings. No Supertext account yet? Create one at https://www.supertext.com/person/en/account/signin. Generate your API key at https://www.supertext.com/en/integrations/api (requires the Admin role).'],
         SdkException::AUTHENTICATION_FAILURE => ['auth_failed', 'Supertext refused the API key. Please check it in the plugin settings. No Supertext account yet? Create one at https://www.supertext.com/person/en/account/signin. Generate your API key at https://www.supertext.com/en/integrations/api (requires the Admin role).'],
         SdkException::INVALID_LANGUAGE_PAIR => ['invalid_language_pair', 'Supertext does not translate from %s into %s. Check the Supertext language codes in the plugin settings.'],
+        SdkException::UNSUPPORTED_LANGUAGE => ['unsupported_language', 'The language %s has no Supertext language yet. Ask your administrator to map it under Plugins → Supertext Translation → Supertext language codes.'],
+        SdkException::UNSUPPORTED_FEATURE => ['unsupported_feature', 'Supertext offers no formal or informal tone for this language. Set the form of address to "Supertext default" in the plugin settings.'],
         SdkException::NOT_FOUND => ['not_found', 'Supertext could not find the requested file.'],
         SdkException::PAYLOAD_TOO_LARGE => ['too_long', 'The page is too long to translate in one go.'],
         SdkException::TOO_MANY_REQUESTS => ['rate_limited', 'Supertext is busy (too many requests). Please try again in a moment.'],
@@ -72,7 +74,7 @@ final class SupertextClient
                     $results[$key] = $stop;
                     continue;
                 }
-                if (mb_strlen($job['html']) > Supertext::DEFAULT_MAX_CHARACTERS) {
+                if (mb_strlen($job['html']) > Protocol::DEFAULT_MAX_CHARACTERS) {
                     $results[$key] = self::reason(SdkException::PAYLOAD_TOO_LARGE);
                     continue;
                 }
@@ -116,16 +118,17 @@ final class SupertextClient
         [$reason, $message] = self::REASONS[$e->errorCode] ?? ['http_error', 'Supertext answered with HTTP %d.'];
         $args = match ($e->errorCode) {
             SdkException::INVALID_LANGUAGE_PAIR => [$e->sourceLang ?? '?', $e->targetLang ?? '?'],
+            SdkException::UNSUPPORTED_LANGUAGE => [$e->targetLang ?? $e->sourceLang ?? '?'],
             SdkException::UNEXPECTED_STATUS => [$e->status ?? 0],
             SdkException::TRANSPORT_ERROR => [$e->detail ?? ''],
             default => [],
         };
         // The answer's own text helps with support, except where it is in the message already or about the key.
-        $detail = in_array($e->errorCode, [SdkException::TRANSPORT_ERROR, SdkException::AUTHENTICATION_FAILURE, SdkException::MISSING_API_KEY], true)
+        $detail = in_array($e->errorCode, [SdkException::TRANSPORT_ERROR, SdkException::AUTHENTICATION_FAILURE, SdkException::MISSING_API_KEY, SdkException::UNSUPPORTED_LANGUAGE], true)
             ? ''
             : trim((string)$e->detail);
 
-        return SupertextException::because($reason, $message, $args, $detail);
+        return SupertextException::because($reason, $message, $args, $detail, $e->status);
     }
 
     private static function reason(string $sdkCode): SupertextException

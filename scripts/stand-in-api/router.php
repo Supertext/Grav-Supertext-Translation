@@ -10,8 +10,15 @@ declare(strict_types=1);
  *
  *   php -S 127.0.0.1:8089 scripts/stand-in-api/router.php
  *   then set the plugin's api_url to http://127.0.0.1:8089/v1/
+ *
+ * It also stands in for the Supertext Commando Center: POST /api/v1/report answers 202 and
+ * logs the event, so local runs never report to the real center
+ * (SUPERTEXT_REPORT_URL=http://127.0.0.1:8089/api/v1/report).
  */
 
+use Supertext\GravTranslation\Sdk\V1\Languages;
+
+require_once __DIR__ . '/../../lib/supertext-sdk/src/V1/Languages.php';
 $dictionary = require __DIR__ . '/translations.php';
 $store = sys_get_temp_dir() . '/supertext-stand-in';
 @mkdir($store, 0777, true);
@@ -24,6 +31,13 @@ function reply(int $status, mixed $data, string $type = 'application/json'): voi
     http_response_code($status);
     header('Content-Type: ' . $type);
     echo $type === 'application/json' ? json_encode($data) : $data;
+}
+
+if ($method === 'POST' && $path === '/api/v1/report') {
+    $report = json_decode((string)file_get_contents('php://input'), true);
+    error_log('stand-in: Commando Center report ' . (is_array($report) ? ($report['event'] ?? '?') . ' from ' . ($report['site_url'] ?? '?') : 'invalid'));
+    reply(is_array($report) ? 202 : 400, ['ok' => is_array($report)]);
+    return;
 }
 
 $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
@@ -40,8 +54,10 @@ if ($method === 'GET' && $path === '/v1/features') {
 if ($method === 'POST' && $path === '/v1/translate/ai/file') {
     $target = (string)($_POST['target_lang'] ?? '');
     $file = $_FILES['file'] ?? null;
-    // Like the real API: the target needs a region ("de-DE"), the source must be bare ("en").
-    if (!preg_match('/^[a-z]{2,3}-[A-Za-z0-9]{2,4}$/', $target) || preg_match('/[-_]/', (string)($_POST['source_lang'] ?? ''))) {
+    // Like the real API: only the exact codes of GET features ("de-CH", "es"; sources bare, "en").
+    $source = (string)($_POST['source_lang'] ?? '');
+    if (!in_array($target, array_column(Languages::TARGETS, 'code'), true)
+        || ($source !== '' && !in_array($source, array_column(Languages::SOURCES, 'code'), true))) {
         reply(400, ['code' => 'INVALID_LANGUAGE_PAIR', 'message' => 'Invalid language pair']);
         return;
     }

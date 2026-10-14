@@ -6,6 +6,7 @@ Translate Grav pages into your site's other languages with [Supertext](https://w
 - One click translates the page into several languages at once: content, title, menu label and meta description.
 - Markdown formatting, links, code, images, Twig and shortcodes come through intact.
 - New translations are created unpublished for review; translations edited by hand are never replaced without asking.
+- The settings let you choose the Supertext language for each site language (e.g. Swiss German, `de-CH`) and check your API key automatically.
 
 ![The Supertext panel in the Grav page editor, after translating into German and French](docs/images/panel-after.png)
 

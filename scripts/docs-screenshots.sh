@@ -5,22 +5,24 @@
 #   composer docs:screenshots
 #
 # Needs PHP 8.3 with curl, Python 3 with Playwright (pip install playwright && playwright install chromium).
-# Builds a throwaway Grav site in .cache/screenshots; nothing outside the repo is touched.
+# Builds a throwaway Grav site in .cache/screenshots (CACHE_DIR=… to put it elsewhere).
 set -e
 cd "$(dirname "$0")/.."
 REPO=$(pwd)
-WORK="$REPO/.cache/screenshots"
+CACHE=${CACHE_DIR:-$REPO/.cache}
+WORK="$CACHE/screenshots"
 GRAV_VERSION=${GRAV_VERSION:-2.2.4}
 GRAV_PORT=${GRAV_PORT:-8090}
 API_PORT=${API_PORT:-8089}
 
-mkdir -p "$REPO/.cache"
-if [ ! -f "$REPO/.cache/grav-admin-$GRAV_VERSION.zip" ]; then
+mkdir -p "$CACHE"
+if [ ! -f "$CACHE/grav-admin-$GRAV_VERSION.zip" ]; then
   echo "Downloading Grav $GRAV_VERSION…"
-  curl -fsSL -o "$REPO/.cache/grav-admin-$GRAV_VERSION.zip" "https://getgrav.org/download/core/grav-admin/$GRAV_VERSION"
+  # GitHub release asset, as in demo/Dockerfile (getgrav.org only serves the latest version).
+  curl -fsSL -o "$CACHE/grav-admin-$GRAV_VERSION.zip" "https://github.com/getgrav/grav/releases/download/$GRAV_VERSION/grav-admin-v$GRAV_VERSION.zip"
 fi
 rm -rf "$WORK" && mkdir -p "$WORK"
-unzip -q "$REPO/.cache/grav-admin-$GRAV_VERSION.zip" -d "$WORK"
+unzip -q "$CACHE/grav-admin-$GRAV_VERSION.zip" -d "$WORK"
 mv "$WORK/grav-admin" "$WORK/grav"
 cp -a "$WORK/grav/user" "$WORK/seed-user"
 
@@ -40,7 +42,9 @@ GRAV_ROOT="$WORK/grav" DEMO_SRC="$REPO/demo" SEED_USER="$WORK/seed-user" DATA_DI
 
 php -S "127.0.0.1:$API_PORT" scripts/stand-in-api/router.php > "$WORK/stand-in.log" 2>&1 &
 API_PID=$!
+# The stand-in also answers the Commando Center's reports, so nothing is reported to Supertext.
 (cd "$WORK/grav" && SUPERTEXT_API_KEY="Supertext-Auth-Key stand-in" SUPERTEXT_API_URL="http://127.0.0.1:$API_PORT/v1/" \
+  SUPERTEXT_REPORT_URL="http://127.0.0.1:$API_PORT/api/v1/report" \
   php -S "127.0.0.1:$GRAV_PORT" system/router.php > "$WORK/grav.log" 2>&1) &
 GRAV_PID=$!
 trap 'kill $API_PID $GRAV_PID 2>/dev/null || true' EXIT

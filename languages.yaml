@@ -2,8 +2,10 @@
 #
 # PLUGIN_SUPERTEXT_TRANSLATION.*      Grav's flat strings: settings labels (blueprints.yaml) and the
 #                                    messages of the plugin's API (PHP, %s placeholders).
-# ICU.PLUGIN_SUPERTEXT_TRANSLATION.*  The page editor panel (admin-next/panels/supertext-translation.js),
-#                                    read through window.__GRAV_I18N; ICU MessageFormat ({name}).
+# ICU.PLUGIN_SUPERTEXT_TRANSLATION.*  PANEL: the page editor panel (admin-next/panels/supertext-translation.js);
+#                                    FIELDS: the plugin's fields on its settings page (admin-next/fields/*.js).
+#                                    Read through window.__GRAV_I18N; ICU MessageFormat ({name}).
+#                                    The API key check texts (FIELDS.KEYCHECK_*) are the Commando Center's.
 #
 # Every key exists in en, de, fr and it (tests/LanguagesTest.php). Formal address (Sie, vous, Lei).
 # Use ’ for apostrophes: a straight ' is a quote character in ICU MessageFormat.
@@ -20,19 +22,20 @@ en:
       API_KEY_DESCRIPTION: No Supertext account yet? <a href="https://www.supertext.com/person/en/account/signin" target="_blank" rel="noopener noreferrer">Create one at supertext.com</a>. Generate your API key at <a href="https://www.supertext.com/en/integrations/api" target="_blank" rel="noopener noreferrer">supertext.com → Integrations → API</a> (requires the Admin role).
       API_URL: API endpoint
       API_URL_HELP: Only change this if Supertext gives you a different endpoint.
+      KEY_CHECK: 'API key check'
+      VERSION_REPORTS: 'Send version information to Supertext'
+      VERSION_REPORTS_HELP: 'Sends the site URL and the versions of this plugin, the CMS and the runtime to Supertext when you save these settings and after an update, so Supertext support can see which version you run. No content, no API key and no personal data are sent.'
       SECTION_LANGUAGES: Languages
       SOURCE_LANGUAGE: Source language
       SOURCE_LANGUAGE_PLACEHOLDER: Site default language
       SOURCE_LANGUAGE_HELP: Grav language code the translations are made from, e.g. "en". Empty means the site's default language.
       LANGUAGE_CODES: Supertext language codes
-      LANGUAGE_CODES_HELP: Which language variant Supertext translates into. Without an entry, the Grav code is used with a region, e.g. de becomes de-DE.
-      LANGUAGE_CODES_KEY: Grav code, e.g. de
-      LANGUAGE_CODES_VALUE: Supertext code, e.g. de-CH
+      LANGUAGE_CODES_HELP: 'Which Supertext language each site language is translated into and from. A Grav code that is exactly a Supertext code (es, nl, de-CH) is used as it is. A bare de, en, fr, it or pt needs a choice, because only you know the variant (de-CH or de-DE, for example).'
       POLITENESS: Form of address
       POLITENESS_DEFAULT: Supertext default
       POLITENESS_MORE: Formal (Sie, vous)
       POLITENESS_LESS: Informal (du, tu)
-      POLITENESS_HELP: Only applies to languages that distinguish formal and informal address.
+      POLITENESS_HELP: 'Only applies to languages Supertext offers a formal and an informal form for. The others always get Supertext’s default.'
       SECTION_CONTENT: What is translated
       HEADER_FIELDS: Front matter fields
       HEADER_FIELDS_HELP: Front matter fields translated together with the page content. Use dots for nested fields, e.g. metadata.description.
@@ -70,6 +73,8 @@ en:
       KEPT_EDITED: The translation was edited after it was translated. It was kept; confirm to replace it.
       KEPT_MANUAL: A translation already exists that was not made with Supertext. It was kept; confirm to replace it.
       PARTLY_UNTRANSLATED: '%d of %d text blocks came back untranslated and were kept in the source language.'
+      UNSUPPORTED_LANGUAGE: 'The language %s has no Supertext language yet. Ask your administrator to map it under Plugins → Supertext Translation → Supertext language codes.'
+      UNSUPPORTED_FEATURE: 'Supertext offers no formal or informal tone for this language. Set the form of address to "Supertext default" in the plugin settings.'
   ICU:
     PLUGIN_SUPERTEXT_TRANSLATION:
       PANEL:
@@ -112,6 +117,27 @@ en:
         FOOT: Supertext translates the page content.
         FOOT_FIELDS: 'Supertext translates the page content and these fields: {fields}.'
         FOOT_KEPT: Translations edited by hand are never replaced without asking.
+        NOT_MAPPED: 'not mapped'
+        NOT_MAPPED_HINT: 'No Supertext language is chosen yet for: {languages}. An administrator can choose one under Plugins → Supertext Translation → Supertext language codes.'
+      FIELDS:
+        KEYCHECK_OK: 'API key checked: the connection to Supertext works.'
+        KEYCHECK_INVALID: 'Supertext rejected the API key. Check that you copied the whole key, or generate a new one at supertext.com → Integrations → API (requires the Admin role). No Supertext account yet? Create one at supertext.com.'
+        KEYCHECK_MISSING: 'No API key is set yet. No Supertext account yet? Create one at supertext.com. Generate your API key at supertext.com → Integrations → API (requires the Admin role).'
+        KEYCHECK_UNREACHABLE: 'The API key couldn’t be checked because Supertext can’t be reached. The settings are saved; check again later.'
+        KEYCHECK_ERROR: 'The API key couldn’t be checked: Supertext answered with an error ({status}). The settings are saved; check again later.'
+        CHECKED_AT: 'Checked {time}'
+        NOT_CHECKED: 'Not checked yet. The API key is checked every time you save these settings.'
+        CHECK_AGAIN: 'Check again'
+        CHECKING: 'Checking…'
+        REPORTS_ENV_OFF: 'The environment variable SUPERTEXT_VERSION_REPORTS={value} turns version reports off, whatever the setting below says.'
+        REPORTS_ENV_ON: 'The environment variable SUPERTEXT_VERSION_REPORTS={value} turns version reports on, whatever the setting below says.'
+        LOAD_ERROR: 'The Supertext status could not be loaded ({error}). Enable the plugin, save the settings and reload this page.'
+        LANG_SOURCE: 'source language, sent as {code}'
+        LANG_CHOOSE: 'Choose a Supertext language'
+        LANG_NOT_MAPPED: 'Not mapped: choose a Supertext language, or this language can’t be translated.'
+        LANG_NO_POLITENESS: 'Supertext offers no formal or informal form for this language: Supertext’s default is used.'
+        LANG_OTHER: '{code} (not in the list)'
+        LANG_UNAVAILABLE: 'Enable the plugin and reload this page to choose the languages.'
 de:
   PLUGIN_SUPERTEXT_TRANSLATION:
     PANEL_LABEL: Supertext-Übersetzung
@@ -125,19 +151,20 @@ de:
       API_KEY_DESCRIPTION: Noch kein Supertext-Konto? <a href="https://www.supertext.com/person/en/account/signin" target="_blank" rel="noopener noreferrer">Erstellen Sie eines auf supertext.com</a>. Ihren API-Schlüssel erzeugen Sie unter <a href="https://www.supertext.com/en/integrations/api" target="_blank" rel="noopener noreferrer">supertext.com → Integrations → API</a> (erfordert die Admin-Rolle).
       API_URL: API-Endpunkt
       API_URL_HELP: Nur ändern, wenn Supertext Ihnen einen anderen Endpunkt nennt.
+      KEY_CHECK: 'Prüfung des API-Schlüssels'
+      VERSION_REPORTS: 'Versionsinformationen an Supertext senden'
+      VERSION_REPORTS_HELP: 'Sendet die URL der Website sowie die Versionen dieses Plugins, des CMS und der Laufzeitumgebung an Supertext, wenn Sie diese Einstellungen speichern und nach einem Update. So sieht der Supertext-Support, welche Version Sie einsetzen. Es werden keine Inhalte, kein API-Schlüssel und keine Personendaten übertragen.'
       SECTION_LANGUAGES: Sprachen
       SOURCE_LANGUAGE: Ausgangssprache
       SOURCE_LANGUAGE_PLACEHOLDER: Standardsprache der Website
       SOURCE_LANGUAGE_HELP: Grav-Sprachcode, aus dem übersetzt wird, z. B. "en". Leer bedeutet die Standardsprache der Website.
       LANGUAGE_CODES: Supertext-Sprachcodes
-      LANGUAGE_CODES_HELP: In welche Sprachvariante Supertext übersetzt. Ohne Eintrag wird der Grav-Code mit Region verwendet, z. B. wird de zu de-DE.
-      LANGUAGE_CODES_KEY: Grav-Code, z. B. de
-      LANGUAGE_CODES_VALUE: Supertext-Code, z. B. de-CH
+      LANGUAGE_CODES_HELP: 'In welche Supertext-Sprache jede Sprache der Website übersetzt wird und aus welcher. Ein Grav-Code, der genau einem Supertext-Code entspricht (es, nl, de-CH), wird unverändert verwendet. Für ein de, en, fr, it oder pt ohne Region wählen Sie die Variante, denn nur Sie wissen, welche gemeint ist (zum Beispiel de-CH oder de-DE).'
       POLITENESS: Anrede
       POLITENESS_DEFAULT: Supertext-Standard
       POLITENESS_MORE: Formell (Sie, vous)
       POLITENESS_LESS: Informell (du, tu)
-      POLITENESS_HELP: Gilt nur für Sprachen, die zwischen formeller und informeller Anrede unterscheiden.
+      POLITENESS_HELP: 'Gilt nur für Sprachen, für die Supertext eine formelle und eine informelle Anrede anbietet. Die übrigen erhalten immer die Standard-Anrede von Supertext.'
       SECTION_CONTENT: Was übersetzt wird
       HEADER_FIELDS: Front-Matter-Felder
       HEADER_FIELDS_HELP: Front-Matter-Felder, die zusammen mit dem Seiteninhalt übersetzt werden. Verschachtelte Felder mit Punkten angeben, z. B. metadata.description.
@@ -175,6 +202,8 @@ de:
       KEPT_EDITED: Die Übersetzung wurde nach dem Übersetzen bearbeitet. Sie wurde beibehalten; bestätigen Sie, um sie zu ersetzen.
       KEPT_MANUAL: Es gibt bereits eine Übersetzung, die nicht mit Supertext erstellt wurde. Sie wurde beibehalten; bestätigen Sie, um sie zu ersetzen.
       PARTLY_UNTRANSLATED: '%d von %d Textblöcken kamen unübersetzt zurück und wurden in der Ausgangssprache belassen.'
+      UNSUPPORTED_LANGUAGE: 'Die Sprache %s ist noch keiner Supertext-Sprache zugeordnet. Bitten Sie Ihre Administratorin oder Ihren Administrator, sie unter Plugins → Supertext Translation → Supertext-Sprachcodes zuzuordnen.'
+      UNSUPPORTED_FEATURE: 'Supertext bietet für diese Sprache keine formelle oder informelle Anrede an. Stellen Sie die Anrede in den Plugin-Einstellungen auf «Supertext-Standard».'
   ICU:
     PLUGIN_SUPERTEXT_TRANSLATION:
       PANEL:
@@ -217,6 +246,27 @@ de:
         FOOT: Supertext übersetzt den Seiteninhalt.
         FOOT_FIELDS: 'Supertext übersetzt den Seiteninhalt und diese Felder: {fields}.'
         FOOT_KEPT: Von Hand bearbeitete Übersetzungen werden nie ohne Rückfrage ersetzt.
+        NOT_MAPPED: 'nicht zugeordnet'
+        NOT_MAPPED_HINT: 'Für diese Sprachen ist noch keine Supertext-Sprache gewählt: {languages}. Eine Administratorin oder ein Administrator kann sie unter Plugins → Supertext Translation → Supertext-Sprachcodes wählen.'
+      FIELDS:
+        KEYCHECK_OK: 'API-Schlüssel geprüft: Die Verbindung zu Supertext funktioniert.'
+        KEYCHECK_INVALID: 'Supertext hat den API-Schlüssel abgelehnt. Prüfen Sie, ob Sie den ganzen Schlüssel kopiert haben, oder erstellen Sie einen neuen unter supertext.com → Integrations → API (erfordert die Rolle Admin). Noch kein Supertext-Konto? Erstellen Sie eines auf supertext.com.'
+        KEYCHECK_MISSING: 'Es ist noch kein API-Schlüssel eingetragen. Noch kein Supertext-Konto? Erstellen Sie eines auf supertext.com. Ihren API-Schlüssel erstellen Sie unter supertext.com → Integrations → API (erfordert die Rolle Admin).'
+        KEYCHECK_UNREACHABLE: 'Der API-Schlüssel konnte nicht geprüft werden, weil Supertext nicht erreichbar ist. Die Einstellungen sind gespeichert; prüfen Sie ihn später erneut.'
+        KEYCHECK_ERROR: 'Der API-Schlüssel konnte nicht geprüft werden: Supertext hat mit einem Fehler geantwortet ({status}). Die Einstellungen sind gespeichert; prüfen Sie ihn später erneut.'
+        CHECKED_AT: 'Geprüft {time}'
+        NOT_CHECKED: 'Noch nicht geprüft. Der API-Schlüssel wird bei jedem Speichern dieser Einstellungen geprüft.'
+        CHECK_AGAIN: 'Erneut prüfen'
+        CHECKING: 'Wird geprüft…'
+        REPORTS_ENV_OFF: 'Die Umgebungsvariable SUPERTEXT_VERSION_REPORTS={value} schaltet die Versionsinformationen aus, unabhängig von der Einstellung unten.'
+        REPORTS_ENV_ON: 'Die Umgebungsvariable SUPERTEXT_VERSION_REPORTS={value} schaltet die Versionsinformationen ein, unabhängig von der Einstellung unten.'
+        LOAD_ERROR: 'Der Supertext-Status konnte nicht geladen werden ({error}). Aktivieren Sie das Plugin, speichern Sie die Einstellungen und laden Sie diese Seite neu.'
+        LANG_SOURCE: 'Ausgangssprache, gesendet als {code}'
+        LANG_CHOOSE: 'Supertext-Sprache wählen'
+        LANG_NOT_MAPPED: 'Nicht zugeordnet: Wählen Sie eine Supertext-Sprache, sonst kann in diese Sprache nicht übersetzt werden.'
+        LANG_NO_POLITENESS: 'Supertext bietet für diese Sprache keine formelle oder informelle Anrede an: Es gilt die Standard-Anrede von Supertext.'
+        LANG_OTHER: '{code} (nicht in der Liste)'
+        LANG_UNAVAILABLE: 'Aktivieren Sie das Plugin und laden Sie diese Seite neu, um die Sprachen zu wählen.'
 fr:
   PLUGIN_SUPERTEXT_TRANSLATION:
     PANEL_LABEL: Traduction Supertext
@@ -230,19 +280,20 @@ fr:
       API_KEY_DESCRIPTION: Pas encore de compte Supertext ? <a href="https://www.supertext.com/person/en/account/signin" target="_blank" rel="noopener noreferrer">Créez-en un sur supertext.com</a>. Générez votre clé API sur <a href="https://www.supertext.com/en/integrations/api" target="_blank" rel="noopener noreferrer">supertext.com → Integrations → API</a> (rôle Admin requis).
       API_URL: Point d’accès de l’API
       API_URL_HELP: Ne modifiez cette valeur que si Supertext vous indique un autre point d’accès.
+      KEY_CHECK: 'Vérification de la clé API'
+      VERSION_REPORTS: 'Envoyer les informations de version à Supertext'
+      VERSION_REPORTS_HELP: 'Envoie à Supertext l’URL du site ainsi que les versions de ce plugin, du CMS et de l’environnement d’exécution lorsque vous enregistrez ces paramètres et après une mise à jour. Le support Supertext voit ainsi quelle version vous utilisez. Aucun contenu, aucune clé API et aucune donnée personnelle ne sont transmis.'
       SECTION_LANGUAGES: Langues
       SOURCE_LANGUAGE: Langue source
       SOURCE_LANGUAGE_PLACEHOLDER: Langue par défaut du site
       SOURCE_LANGUAGE_HELP: Code de langue Grav à partir duquel les traductions sont faites, par ex. "en". Vide signifie la langue par défaut du site.
       LANGUAGE_CODES: Codes de langue Supertext
-      LANGUAGE_CODES_HELP: La variante de langue dans laquelle Supertext traduit. Sans entrée, le code Grav est utilisé avec une région, p. ex. de devient de-DE.
-      LANGUAGE_CODES_KEY: Code Grav, par ex. de
-      LANGUAGE_CODES_VALUE: Code Supertext, par ex. de-CH
+      LANGUAGE_CODES_HELP: 'La langue Supertext vers laquelle et depuis laquelle chaque langue du site est traduite. Un code Grav identique à un code Supertext (es, nl, de-CH) est utilisé tel quel. Pour de, en, fr, it ou pt sans région, choisissez la variante, car vous seul savez laquelle est voulue (par exemple de-CH ou de-DE).'
       POLITENESS: Forme d’adresse
       POLITENESS_DEFAULT: Valeur par défaut de Supertext
       POLITENESS_MORE: Formel (Sie, vous)
       POLITENESS_LESS: Informel (du, tu)
-      POLITENESS_HELP: S’applique uniquement aux langues qui distinguent le vouvoiement et le tutoiement.
+      POLITENESS_HELP: 'S’applique uniquement aux langues pour lesquelles Supertext propose une forme formelle et une forme informelle. Les autres reçoivent toujours la valeur par défaut de Supertext.'
       SECTION_CONTENT: Ce qui est traduit
       HEADER_FIELDS: Champs du front matter
       HEADER_FIELDS_HELP: Champs du front matter traduits avec le contenu de la page. Utilisez des points pour les champs imbriqués, par ex. metadata.description.
@@ -280,6 +331,8 @@ fr:
       KEPT_EDITED: La traduction a été modifiée après avoir été traduite. Elle a été conservée ; confirmez pour la remplacer.
       KEPT_MANUAL: Une traduction qui n’a pas été faite avec Supertext existe déjà. Elle a été conservée ; confirmez pour la remplacer.
       PARTLY_UNTRANSLATED: '%d blocs de texte sur %d sont revenus non traduits et ont été conservés dans la langue source.'
+      UNSUPPORTED_LANGUAGE: 'La langue %s n’est encore associée à aucune langue Supertext. Demandez à votre administrateur de l’associer sous Plugins → Supertext Translation → Codes de langue Supertext.'
+      UNSUPPORTED_FEATURE: 'Supertext ne propose pas de ton formel ou informel pour cette langue. Réglez la forme d’adresse sur « Valeur par défaut de Supertext » dans les paramètres du plugin.'
   ICU:
     PLUGIN_SUPERTEXT_TRANSLATION:
       PANEL:
@@ -322,6 +375,27 @@ fr:
         FOOT: Supertext traduit le contenu de la page.
         FOOT_FIELDS: 'Supertext traduit le contenu de la page et ces champs : {fields}.'
         FOOT_KEPT: Les traductions modifiées à la main ne sont jamais remplacées sans votre accord.
+        NOT_MAPPED: 'non associée'
+        NOT_MAPPED_HINT: 'Aucune langue Supertext n’est encore choisie pour : {languages}. Un administrateur peut en choisir une sous Plugins → Supertext Translation → Codes de langue Supertext.'
+      FIELDS:
+        KEYCHECK_OK: 'Clé API vérifiée : la connexion à Supertext fonctionne.'
+        KEYCHECK_INVALID: 'Supertext a refusé la clé API. Vérifiez que vous avez copié la clé entière ou générez-en une nouvelle sur supertext.com → Integrations → API (rôle Admin requis). Pas encore de compte Supertext ? Créez-en un sur supertext.com.'
+        KEYCHECK_MISSING: 'Aucune clé API n’est encore saisie. Pas encore de compte Supertext ? Créez-en un sur supertext.com. Générez votre clé API sur supertext.com → Integrations → API (rôle Admin requis).'
+        KEYCHECK_UNREACHABLE: 'La clé API n’a pas pu être vérifiée, car Supertext n’est pas joignable. Les paramètres sont enregistrés ; réessayez plus tard.'
+        KEYCHECK_ERROR: 'La clé API n’a pas pu être vérifiée : Supertext a répondu par une erreur ({status}). Les paramètres sont enregistrés ; réessayez plus tard.'
+        CHECKED_AT: 'Vérifiée {time}'
+        NOT_CHECKED: 'Pas encore vérifiée. La clé API est vérifiée chaque fois que vous enregistrez ces paramètres.'
+        CHECK_AGAIN: 'Vérifier à nouveau'
+        CHECKING: 'Vérification…'
+        REPORTS_ENV_OFF: 'La variable d’environnement SUPERTEXT_VERSION_REPORTS={value} désactive l’envoi des informations de version, quel que soit le réglage ci-dessous.'
+        REPORTS_ENV_ON: 'La variable d’environnement SUPERTEXT_VERSION_REPORTS={value} active l’envoi des informations de version, quel que soit le réglage ci-dessous.'
+        LOAD_ERROR: 'Le statut Supertext n’a pas pu être chargé ({error}). Activez le plugin, enregistrez les paramètres et rechargez cette page.'
+        LANG_SOURCE: 'langue source, envoyée comme {code}'
+        LANG_CHOOSE: 'Choisir une langue Supertext'
+        LANG_NOT_MAPPED: 'Non associée : choisissez une langue Supertext, sinon cette langue ne peut pas être traduite.'
+        LANG_NO_POLITENESS: 'Supertext ne propose pas de forme formelle ou informelle pour cette langue : la valeur par défaut de Supertext est utilisée.'
+        LANG_OTHER: '{code} (absent de la liste)'
+        LANG_UNAVAILABLE: 'Activez le plugin et rechargez cette page pour choisir les langues.'
 it:
   PLUGIN_SUPERTEXT_TRANSLATION:
     PANEL_LABEL: Traduzione Supertext
@@ -335,19 +409,20 @@ it:
       API_KEY_DESCRIPTION: Non ha ancora un account Supertext? <a href="https://www.supertext.com/person/en/account/signin" target="_blank" rel="noopener noreferrer">Ne crei uno su supertext.com</a>. Generi la Sua chiave API su <a href="https://www.supertext.com/en/integrations/api" target="_blank" rel="noopener noreferrer">supertext.com → Integrations → API</a> (richiede il ruolo Admin).
       API_URL: Endpoint API
       API_URL_HELP: Lo modifichi solo se Supertext Le indica un endpoint diverso.
+      KEY_CHECK: 'Verifica della chiave API'
+      VERSION_REPORTS: 'Inviare le informazioni sulla versione a Supertext'
+      VERSION_REPORTS_HELP: 'Invia a Supertext l’URL del sito e le versioni di questo plugin, del CMS e dell’ambiente di esecuzione quando salva queste impostazioni e dopo un aggiornamento. In questo modo l’assistenza Supertext vede quale versione utilizza. Non vengono trasmessi contenuti, chiavi API né dati personali.'
       SECTION_LANGUAGES: Lingue
       SOURCE_LANGUAGE: Lingua di partenza
       SOURCE_LANGUAGE_PLACEHOLDER: Lingua predefinita del sito
       SOURCE_LANGUAGE_HELP: Codice lingua Grav da cui vengono fatte le traduzioni, ad es. "en". Vuoto significa la lingua predefinita del sito.
       LANGUAGE_CODES: Codici lingua Supertext
-      LANGUAGE_CODES_HELP: La variante linguistica in cui Supertext traduce. Senza una voce, il codice Grav viene usato con una regione, ad es. de diventa de-DE.
-      LANGUAGE_CODES_KEY: Codice Grav, ad es. de
-      LANGUAGE_CODES_VALUE: Codice Supertext, ad es. de-CH
+      LANGUAGE_CODES_HELP: 'La lingua Supertext in cui e da cui viene tradotta ogni lingua del sito. Un codice Grav identico a un codice Supertext (es, nl, de-CH) viene usato così com’è. Per de, en, fr, it o pt senza regione scelga la variante, perché solo Lei sa quale è intesa (ad esempio de-CH o de-DE).'
       POLITENESS: Forma di cortesia
       POLITENESS_DEFAULT: Impostazione predefinita di Supertext
       POLITENESS_MORE: Formale (Sie, vous)
       POLITENESS_LESS: Informale (du, tu)
-      POLITENESS_HELP: Si applica solo alle lingue che distinguono tra forma di cortesia e forma informale.
+      POLITENESS_HELP: 'Si applica solo alle lingue per cui Supertext offre una forma di cortesia e una forma informale. Le altre ricevono sempre l’impostazione predefinita di Supertext.'
       SECTION_CONTENT: Cosa viene tradotto
       HEADER_FIELDS: Campi del front matter
       HEADER_FIELDS_HELP: Campi del front matter tradotti insieme al contenuto della pagina. Usi i punti per i campi annidati, ad es. metadata.description.
@@ -385,6 +460,8 @@ it:
       KEPT_EDITED: La traduzione è stata modificata dopo essere stata tradotta. È stata mantenuta; confermi per sostituirla.
       KEPT_MANUAL: Esiste già una traduzione non fatta con Supertext. È stata mantenuta; confermi per sostituirla.
       PARTLY_UNTRANSLATED: '%d blocchi di testo su %d sono tornati non tradotti e sono stati mantenuti nella lingua di partenza.'
+      UNSUPPORTED_LANGUAGE: 'La lingua %s non è ancora associata a una lingua Supertext. Chieda al Suo amministratore di associarla in Plugin → Supertext Translation → Codici lingua Supertext.'
+      UNSUPPORTED_FEATURE: 'Supertext non offre un tono formale o informale per questa lingua. Imposti la forma di cortesia su «Impostazione predefinita di Supertext» nelle impostazioni del plugin.'
   ICU:
     PLUGIN_SUPERTEXT_TRANSLATION:
       PANEL:
@@ -427,3 +504,24 @@ it:
         FOOT: Supertext traduce il contenuto della pagina.
         FOOT_FIELDS: 'Supertext traduce il contenuto della pagina e questi campi: {fields}.'
         FOOT_KEPT: Le traduzioni modificate a mano non vengono mai sostituite senza chiedere.
+        NOT_MAPPED: 'non associata'
+        NOT_MAPPED_HINT: 'Per queste lingue non è ancora scelta una lingua Supertext: {languages}. Un amministratore può sceglierla in Plugin → Supertext Translation → Codici lingua Supertext.'
+      FIELDS:
+        KEYCHECK_OK: 'Chiave API verificata: la connessione a Supertext funziona.'
+        KEYCHECK_INVALID: 'Supertext ha rifiutato la chiave API. Verifichi di aver copiato l’intera chiave oppure ne generi una nuova su supertext.com → Integrations → API (richiede il ruolo Admin). Non ha ancora un account Supertext? Ne crei uno su supertext.com.'
+        KEYCHECK_MISSING: 'Non è ancora stata inserita alcuna chiave API. Non ha ancora un account Supertext? Ne crei uno su supertext.com. Generi la Sua chiave API su supertext.com → Integrations → API (richiede il ruolo Admin).'
+        KEYCHECK_UNREACHABLE: 'Non è stato possibile verificare la chiave API perché Supertext non è raggiungibile. Le impostazioni sono salvate; riprovi più tardi.'
+        KEYCHECK_ERROR: 'Non è stato possibile verificare la chiave API: Supertext ha risposto con un errore ({status}). Le impostazioni sono salvate; riprovi più tardi.'
+        CHECKED_AT: 'Verificata {time}'
+        NOT_CHECKED: 'Non ancora verificata. La chiave API viene verificata ogni volta che salva queste impostazioni.'
+        CHECK_AGAIN: 'Verifica di nuovo'
+        CHECKING: 'Verifica in corso…'
+        REPORTS_ENV_OFF: 'La variabile d’ambiente SUPERTEXT_VERSION_REPORTS={value} disattiva l’invio delle informazioni sulla versione, indipendentemente dall’impostazione qui sotto.'
+        REPORTS_ENV_ON: 'La variabile d’ambiente SUPERTEXT_VERSION_REPORTS={value} attiva l’invio delle informazioni sulla versione, indipendentemente dall’impostazione qui sotto.'
+        LOAD_ERROR: 'Non è stato possibile caricare lo stato Supertext ({error}). Attivi il plugin, salvi le impostazioni e ricarichi questa pagina.'
+        LANG_SOURCE: 'lingua di partenza, inviata come {code}'
+        LANG_CHOOSE: 'Scelga una lingua Supertext'
+        LANG_NOT_MAPPED: 'Non associata: scelga una lingua Supertext, altrimenti questa lingua non può essere tradotta.'
+        LANG_NO_POLITENESS: 'Supertext non offre una forma di cortesia o informale per questa lingua: viene usata l’impostazione predefinita di Supertext.'
+        LANG_OTHER: '{code} (non nell’elenco)'
+        LANG_UNAVAILABLE: 'Attivi il plugin e ricarichi questa pagina per scegliere le lingue.'

@@ -27,6 +27,8 @@ The Supertext panel and its messages appear in your admin language (English, Ger
 
 You can close the panel with **×** at any time. Closing it does not stop a translation that is already running.
 
+Next to each language the panel shows the Supertext language it is translated into, e.g. *de-CH* for Swiss German. A language marked **not mapped** has no Supertext language yet: it can't be ticked, and a note at the top names it. Your administrator chooses the Supertext language for it in the plugin settings.
+
 ## Review and publish a translation
 
 New translations are saved **unpublished**, so visitors don't see them until you have checked them (your administrator can change this).
@@ -89,6 +91,8 @@ The messages appear in your admin language; the table lists their English wordin
 | --- | --- |
 | No Supertext API key is configured yet | The administrator still has to enter the Supertext API key. Translating is disabled until then. The message links to Supertext's signup page and to the page where the key is generated (supertext.com → Integrations → API, requires the Admin role). |
 | Supertext refused the API key | The key is wrong or no longer valid. Ask your administrator. |
+| No Supertext language is chosen yet for: … / The language … has no Supertext language yet | The administrator hasn't said which Supertext language this site language is (for example Swiss or German German). Nothing was sent for it; the other languages are translated. Ask your administrator to choose it under *Plugins → Supertext Translation → Supertext language codes*. |
+| Supertext offers no formal or informal tone for this language | The plugin settings ask for formal or informal address, and Supertext doesn't offer that for this language. Ask your administrator to set the form of address to *Supertext default*. |
 | Supertext does not translate from … into … | Supertext doesn't offer this language pair, or the language code for Supertext is set wrongly. Ask your administrator to check the Supertext language codes. |
 | Your Supertext translation limit is exceeded | Your Supertext plan's limit is reached. Contact Supertext or your administrator. |
 | Supertext is busy (too many requests) | Wait a moment and try again. |

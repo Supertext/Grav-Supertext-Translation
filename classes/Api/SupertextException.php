@@ -9,7 +9,8 @@ namespace Grav\Plugin\SupertextTranslation\Api;
  *
  * The message is English. $reason (e.g. "limit_exceeded") lets the plugin show its own
  * translation (PLUGIN_SUPERTEXT_TRANSLATION.ERRORS.<REASON>, with $args) in the user's
- * admin language; $detail, if set, is appended in brackets.
+ * admin language; $detail, if set, is appended in brackets. $status is Supertext's HTTP
+ * status, if there was an answer (a 401/403 marks the API key as rejected).
  */
 final class SupertextException extends \RuntimeException
 {
@@ -21,6 +22,7 @@ final class SupertextException extends \RuntimeException
         public readonly string $reason = '',
         public readonly array $args = [],
         public readonly string $detail = '',
+        public readonly ?int $status = null,
     ) {
         parent::__construct($message, $code, $previous);
     }
@@ -29,10 +31,10 @@ final class SupertextException extends \RuntimeException
      * @param string $message English text, with %s / %d placeholders for $args
      * @param list<string|int> $args
      */
-    public static function because(string $reason, string $message, array $args = [], string $detail = ''): self
+    public static function because(string $reason, string $message, array $args = [], string $detail = '', ?int $status = null): self
     {
         $message = $args ? vsprintf($message, $args) : $message;
 
-        return new self($detail !== '' ? $message . ' (' . $detail . ')' : $message, 0, null, $reason, $args, $detail);
+        return new self($detail !== '' ? $message . ' (' . $detail . ')' : $message, 0, null, $reason, $args, $detail, $status);
     }
 }

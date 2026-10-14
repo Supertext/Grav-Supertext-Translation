@@ -7,6 +7,7 @@ namespace Grav\Plugin\SupertextTranslation\Tests;
 use Supertext\GravTranslation\Sdk\Http\HttpRequest;
 use Supertext\GravTranslation\Sdk\Http\HttpResponse;
 use Supertext\GravTranslation\Sdk\Http\HttpTransport;
+use Supertext\GravTranslation\Sdk\V1\Languages;
 
 /**
  * In-memory stand-in for the Supertext file API. "Translates" by running a
@@ -63,8 +64,10 @@ final class FakeSupertext implements HttpTransport
         if ($method === 'POST' && str_ends_with($path, '/translate/ai/file')) {
             preg_match('/name="target_lang"\r\n\r\n([^\r]*)/', (string)$body, $t);
             preg_match('/name="source_lang"\r\n\r\n([^\r]*)/', (string)$body, $s);
-            // Like the real API: the target needs a region ("de-DE"), the source must be bare ("en").
-            if (!preg_match('/^[a-z]{2,3}-[A-Za-z0-9]{2,4}$/', $t[1] ?? '') || preg_match('/[-_]/', $s[1] ?? '')) {
+            // Like the real API: only the exact codes of GET features ("de-CH", "es"; sources bare, "en").
+            $targets = array_column(Languages::TARGETS, 'code');
+            $sources = array_column(Languages::SOURCES, 'code');
+            if (!in_array($t[1] ?? '', $targets, true) || (($s[1] ?? '') !== '' && !in_array($s[1], $sources, true))) {
                 return $this->json(400, ['code' => 'INVALID_LANGUAGE_PAIR']);
             }
             preg_match('/Content-Type: text\/html\r\n\r\n(.*)\r\n--/s', (string)$body, $f);

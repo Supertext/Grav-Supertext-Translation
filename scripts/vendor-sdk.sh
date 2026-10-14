@@ -1,6 +1,7 @@
 #!/bin/sh
 # Copies the PHP Supertext SDK from its GitHub repository into lib/supertext-sdk, with its
-# namespace changed from Supertext\Sdk to Supertext\GravTranslation\Sdk. The plugin ships
+# namespace changed from Supertext\Sdk to Supertext\GravTranslation\Sdk (sub-namespaces such as
+# Supertext\Sdk\V1 and Supertext\Sdk\Http too). The plugin ships
 # this copy, so sites install nothing besides the plugin, and another plugin that requires
 # supertext/supertext-sdk itself can never clash with it.
 #
@@ -28,11 +29,13 @@ cp -R "$SRC/sdk/php/src" "$DEST/src"
 cp "$SRC/LICENSE" "$DEST/LICENSE"
 find "$DEST/src" -name '*.php' -exec sed -i 's/Supertext\\Sdk\\/Supertext\\GravTranslation\\Sdk\\/g; s/Supertext\\Sdk;/Supertext\\GravTranslation\\Sdk;/g' {} +
 printf '%s\n' "$COMMIT" > "$DEST/COMMIT"
+VERSION="$(sed -n "s/.*SDK_VERSION = '\\([^']*\\)'.*/\\1/p" "$DEST/src/Supertext.php")"
+printf '%s\n' "$VERSION" > "$DEST/VERSION"
 cat > "$DEST/README.md" <<EOF
 # Supertext SDK (bundled copy)
 
 PHP part of the [Supertext SDK](https://github.com/Supertext/Supertext-API-SDK-and-Guide),
-commit \`$COMMIT\`, namespace \`Supertext\\GravTranslation\\Sdk\` instead of \`Supertext\\Sdk\`.
+version $VERSION, commit \`$COMMIT\`, namespace \`Supertext\\GravTranslation\\Sdk\` instead of \`Supertext\\Sdk\`.
 
 Don't edit these files: fix the SDK in its own repository, then run \`scripts/vendor-sdk.sh\`.
 EOF
@@ -40,4 +43,4 @@ if grep -rq 'Supertext\\Sdk' "$DEST/src"; then
     echo "vendor-sdk: unprefixed Supertext\\Sdk reference left in $DEST/src" >&2
     exit 1
 fi
-echo "lib/supertext-sdk: Supertext SDK (PHP) from commit $COMMIT"
+echo "lib/supertext-sdk: Supertext SDK (PHP) $VERSION from commit $COMMIT"

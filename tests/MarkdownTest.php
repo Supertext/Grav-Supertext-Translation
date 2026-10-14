@@ -7,8 +7,8 @@ namespace Grav\Plugin\SupertextTranslation\Tests;
 use Grav\Plugin\SupertextTranslation\Markdown\InlineConverter;
 use Grav\Plugin\SupertextTranslation\Markdown\MarkdownDocument;
 use PHPUnit\Framework\TestCase;
-use Supertext\GravTranslation\Sdk\HtmlDocument;
-use Supertext\GravTranslation\Sdk\Segment;
+use Supertext\GravTranslation\Sdk\V1\HtmlDocument;
+use Supertext\GravTranslation\Sdk\V1\Segment;
 
 final class MarkdownTest extends TestCase
 {

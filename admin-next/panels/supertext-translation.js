@@ -52,6 +52,8 @@ const EN = {
     FOOT: 'Supertext translates the page content.',
     FOOT_FIELDS: 'Supertext translates the page content and these fields: {fields}.',
     FOOT_KEPT: 'Translations edited by hand are never replaced without asking.',
+    NOT_MAPPED: 'not mapped',
+    NOT_MAPPED_HINT: 'No Supertext language is chosen yet for: {languages}. An administrator can choose one under Plugins → Supertext Translation → Supertext language codes.',
 };
 
 function t(key, params) {
@@ -162,8 +164,9 @@ class SupertextTranslationPanel extends HTMLElement {
             const status = await this._call('GET', '/supertext/status?route=' + encodeURIComponent(route));
             if (this._loadedRoute !== route) return;
             this._status = status;
+            // Languages without a Supertext language (supertext_code null) can't be translated.
             this._selected = new Set(
-                status.languages.filter((l) => l.state === 'missing' || l.state === 'outdated').map((l) => l.code),
+                status.languages.filter((l) => l.supertext_code && (l.state === 'missing' || l.state === 'outdated')).map((l) => l.code),
             );
         } catch (e) {
             this._error = e.message;
@@ -258,16 +261,23 @@ class SupertextTranslationPanel extends HTMLElement {
             if (!s.languages.length) {
                 body += `<div class="st-box st-info">${this._esc(t('NO_LANGUAGES'))}</div>`;
             }
+            const unmapped = [...(s.source.supertext_code ? [] : [s.source]), ...s.languages.filter((l) => !l.supertext_code)];
+            if (unmapped.length) {
+                body += `<div class="st-box st-warn">${this._esc(t('NOT_MAPPED_HINT', { languages: unmapped.map((l) => l.name).join(', ') }))}</div>`;
+            }
 
             body += '<ul class="st-langs">';
             for (const l of s.languages) {
                 const state = STATE_LABELS[l.state];
                 const label = state ? { text: t(state.key), tone: state.tone } : { text: l.state, tone: 'muted' };
                 const when = l.translated && l.state !== 'manual' ? ` · ${this._esc(this._date(l.translated))}` : '';
+                const code = l.supertext_code
+                    ? `<span class="st-code">${this._esc(l.supertext_code)}</span>`
+                    : `<span class="st-code st-warn">${this._esc(t('NOT_MAPPED'))}</span>`;
                 body += `<li>
                     <label class="st-lang">
-                        <input type="checkbox" data-code="${this._esc(l.code)}" ${this._selected.has(l.code) ? 'checked' : ''} ${this._busy ? 'disabled' : ''}>
-                        <span class="st-name">${this._esc(l.name)} <span class="st-code">${this._esc(l.supertext_code)}</span></span>
+                        <input type="checkbox" data-code="${this._esc(l.code)}" ${this._selected.has(l.code) ? 'checked' : ''} ${this._busy || !l.supertext_code ? 'disabled' : ''}>
+                        <span class="st-name">${this._esc(l.name)} ${code}</span>
                         <span class="st-state st-${label.tone}">${this._esc(label.text)}${when}</span>
                     </label>
                 </li>`;

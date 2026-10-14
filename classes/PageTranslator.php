@@ -7,8 +7,9 @@ namespace Grav\Plugin\SupertextTranslation;
 use Grav\Plugin\SupertextTranslation\Api\SupertextClient;
 use Grav\Plugin\SupertextTranslation\Api\SupertextException;
 use Grav\Plugin\SupertextTranslation\Markdown\MarkdownDocument;
-use Supertext\GravTranslation\Sdk\HtmlDocument;
-use Supertext\GravTranslation\Sdk\Segment;
+use Supertext\GravTranslation\Sdk\V1\HtmlDocument;
+use Supertext\GravTranslation\Sdk\V1\Segment;
+use Supertext\GravTranslation\Sdk\V1\SupertextException as SdkException;
 
 /**
  * Translates one Grav page folder into other languages.
@@ -71,8 +72,8 @@ final class PageTranslator
 
     /**
      * @param list<string> $targets Grav language codes
-     * @return array<string, array{result: string, state: string, message: string, file: string, reason?: string, args?: list<string|int>, detail?: string}>
-     *   result: created | updated | skipped | error
+     * @return array<string, array{result: string, state: string, message: string, file: string, reason?: string, args?: list<string|int>, detail?: string, status?: int}>
+     *   result: created | updated | skipped | error; status: Supertext's HTTP status for an error answer
      */
     public function translate(string $folder, string $template, string $source, array $targets, bool $overwrite = false): array
     {
@@ -102,6 +103,11 @@ final class PageTranslator
             throw SupertextException::because('no_text', 'This page has no text to translate.');
         }
         $html = HtmlDocument::build($segments);
+        try {
+            $sourceCode = $this->settings->sourceCode($source);
+        } catch (SdkException $e) {
+            throw SupertextClient::fromSdk($e); // no Supertext language for the source: nothing is sent
+        }
 
         $results = [];
         $jobs = [];
@@ -123,12 +129,19 @@ final class PageTranslator
                 ];
                 continue;
             }
+            try {
+                $target = $this->settings->targetCode($lang);
+            } catch (SdkException $e) {
+                // Not mapped: this language is skipped, the others are translated.
+                $results[$lang] = ['result' => 'error', 'state' => $state, 'file' => basename($file)] + self::error(SupertextClient::fromSdk($e));
+                continue;
+            }
             $results[$lang] = ['result' => 'pending', 'state' => $state, 'file' => basename($file), 'message' => ''];
             $jobs[$lang] = [
                 'html' => $html,
-                'target' => $this->settings->supertextCode($lang),
-                'source' => $this->settings->sourceCode($source),
-                'politeness' => $this->settings->politeness,
+                'target' => $target,
+                'source' => $sourceCode,
+                'politeness' => $this->settings->politenessFor($target),
             ];
         }
 
@@ -142,7 +155,7 @@ final class PageTranslator
                 // Segments missing from the answer stay in the source language.
                 $parsed = array_filter(HtmlDocument::parse((string)$translated, $segments), static fn(?string $t): bool => $t !== null);
                 $existed = is_file($file);
-                $page = $this->buildTranslation($sourcePage, $existed ? PageFile::read($file) : null, $document, $parsed, $fieldIds, $bodyOffset, $lang, $sourceHash);
+                $page = $this->buildTranslation($sourcePage, $existed ? PageFile::read($file) : null, $document, $parsed, $fieldIds, $bodyOffset, $jobs[$lang]['target'], $sourceHash);
                 $page->write($file);
                 $results[$lang] = [
                     'result' => $existed ? 'updated' : 'created',
@@ -164,12 +177,13 @@ final class PageTranslator
      * The English message of an error, plus its reason, args and detail when it has one,
      * so the admin can show it in the user's language.
      *
-     * @return array{message: string, reason?: string, args?: list<string|int>, detail?: string}
+     * @return array{message: string, reason?: string, args?: list<string|int>, detail?: string, status?: int}
      */
     private static function error(\Throwable $e): array
     {
         if ($e instanceof SupertextException && $e->reason !== '') {
-            return ['message' => $e->getMessage(), 'reason' => $e->reason, 'args' => $e->args, 'detail' => $e->detail];
+            return ['message' => $e->getMessage(), 'reason' => $e->reason, 'args' => $e->args, 'detail' => $e->detail]
+                + ($e->status !== null ? ['status' => $e->status] : []);
         }
 
         return ['message' => $e->getMessage()];
@@ -186,7 +200,7 @@ final class PageTranslator
         array $parsed,
         array $fieldIds,
         int $bodyOffset,
-        string $lang,
+        string $targetCode,
         string $sourceHash,
     ): PageFile {
         $header = $source->header;
@@ -217,7 +231,7 @@ final class PageTranslator
         $page->body = $document->render($body);
 
         $page->header['supertext'] = [
-            'language' => $this->settings->supertextCode($lang),
+            'language' => $targetCode,
             'source_hash' => $sourceHash,
             'translation_hash' => $this->fingerprint($page),
             'translated' => ($this->now)(),

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Supertext\GravTranslation\Sdk;
+namespace Supertext\GravTranslation\Sdk\V1;
 
 /**
  * Small UTF-8 helpers, so the SDK doesn't need ext-mbstring.

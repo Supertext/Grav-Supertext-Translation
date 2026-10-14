@@ -10,11 +10,14 @@
 ### Fixed
 
 - A target language Supertext doesn't know is now reported as an unsupported language pair naming the two languages (was: "Supertext could not find the requested file").
-- Locale variants in the *Supertext language codes* such as `de_DE_formal` are sent to Supertext as `de-DE`.
-- Target languages without a region (e.g. Grav's `de` without a *Supertext language codes* entry) are now sent to Supertext as a regional code (`de-DE`, `fr-FR`, `en-US`, …), which Supertext requires; mapped codes are normalized (`de_ch` → `de-CH`). The source is always sent without region.
+- Languages are sent to Supertext only as codes Supertext accepts (bundled Supertext SDK 0.2.1). The plugin no longer guesses a region: guessed codes such as `es-ES`, `sl-SI` or `zh-CN` were rejected by Supertext. A Grav code that is exactly a Supertext code (`de-ch` → `de-CH`, `es`) is used as it is; a bare `de`, `en`, `fr`, `it` or `pt` needs an entry in *Supertext language codes*. The source is always sent without region, from the same entries (`de` → `de-CH` is sent as `de`).
+- Formal or informal address is only sent for languages Supertext offers it for; the others (English, Romansh, Albanian, Serbian, Swiss German) get Supertext's default instead of an error.
 
 ### Added
 
+- *Supertext language codes* in the settings is now a list of the site's languages, each with a choice of the languages Supertext offers, pre-selected where the Grav code is exactly a Supertext code. Languages without a Supertext language are shown as *Not mapped* in the settings and *not mapped* in the panel, and translating into them gives a clear message ("The language … has no Supertext language yet") while the other languages are translated. **Check your settings after updating:** sites that relied on the automatic region for `de`, `fr`, `it`, `en` or `pt` need to choose it.
+- Automatic API key check: every time the settings are saved (and with *Check again*), the plugin checks the key with Supertext and shows the result with its time on the settings page, with the account and API key links when the key is missing or rejected.
+- Setting *Send version information to Supertext* (on by default): sends the site URL and the versions of the plugin, Grav, PHP and the Supertext SDK, whether a key is set and the key check result to Supertext when the settings are saved and after an update; never content, the API key or personal data. `SUPERTEXT_VERSION_REPORTS=0` turns it off. A public address, `/api/v1/supertext/ping`, lets Supertext check that the site can be reached (404 while the setting is off).
 - French and Italian interface, and German, which was missing: the panel, the settings and the messages from Supertext now follow the user's admin language. The "no API key" and "API key refused" messages now also link to Supertext account sign-up.
 
 ## 0.1.0 — 2026-10-07
