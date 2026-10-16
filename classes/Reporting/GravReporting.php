@@ -7,7 +7,7 @@ namespace Grav\Plugin\SupertextTranslation\Reporting;
 use Grav\Common\Grav;
 use Grav\Plugin\SupertextTranslation\PluginVersion;
 use Grav\Plugin\SupertextTranslation\Settings;
-use Supertext\GravTranslation\Sdk\V1\InstallationReporter;
+use Supertext\GravTranslation\PluginHealth\InstallationReporter;
 
 /**
  * Builds the plugin's Reporting from what Grav knows: the site's base URL, the Grav version, the

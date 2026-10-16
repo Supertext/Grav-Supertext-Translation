@@ -13,7 +13,7 @@ use Grav\Plugin\SupertextTranslation\Reporting\Reporting;
 use Grav\Plugin\SupertextTranslation\Settings;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Supertext\GravTranslation\Sdk\V1\ApiKeyCheck;
+use Supertext\GravTranslation\PluginHealth\KeyCheck;
 use Supertext\GravTranslation\Sdk\V1\Languages;
 
 /**
@@ -52,7 +52,7 @@ final class SettingsController extends AbstractApiController
     }
 
     /** @return array<string, mixed> */
-    private function payload(Settings $settings, Reporting $reporting, ?ApiKeyCheck $check): array
+    private function payload(Settings $settings, Reporting $reporting, ?KeyCheck $check): array
     {
         $language = $this->grav['language'];
         $codes = array_values(array_map('strval', (array)$language->getLanguages()));

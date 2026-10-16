@@ -10,7 +10,7 @@ use Grav\Plugin\SupertextTranslation\Reporting\Reporting;
 use Grav\Plugin\SupertextTranslation\Settings;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Supertext\GravTranslation\Sdk\V1\InstallationReporter;
+use Supertext\GravTranslation\PluginHealth\InstallationReporter;
 
 /**
  * GET /api/v1/supertext/ping?challenge=… — the public endpoint the Supertext Commando Center

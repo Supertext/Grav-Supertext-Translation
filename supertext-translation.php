@@ -14,12 +14,14 @@ use Grav\Plugin\SupertextTranslation\Reporting\Reporting;
 use Grav\Plugin\SupertextTranslation\Settings;
 use RocketTheme\Toolbox\Event\Event;
 
-// The plugin's classes, and the Supertext SDK it ships (lib/supertext-sdk, own namespace,
-// see docs/DEVELOPER.md → Bundled Supertext SDK).
+// The plugin's classes, and the Supertext SDK and Supertext Plugin Health it ships
+// (lib/supertext-sdk, lib/supertext-plugin-health, own namespaces, see docs/DEVELOPER.md →
+// Bundled Supertext SDK and Supertext Plugin Health).
 spl_autoload_register(static function (string $class): void {
     foreach ([
         'Grav\\Plugin\\SupertextTranslation\\' => __DIR__ . '/classes/',
         'Supertext\\GravTranslation\\Sdk\\' => __DIR__ . '/lib/supertext-sdk/src/',
+        'Supertext\\GravTranslation\\PluginHealth\\' => __DIR__ . '/lib/supertext-plugin-health/src/',
     ] as $prefix => $dir) {
         if (str_starts_with($class, $prefix)) {
             $file = $dir . str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';

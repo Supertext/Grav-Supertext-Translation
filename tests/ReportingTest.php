@@ -8,13 +8,14 @@ use Grav\Plugin\SupertextTranslation\Reporting\Reporting;
 use Grav\Plugin\SupertextTranslation\Reporting\StateStore;
 use Grav\Plugin\SupertextTranslation\Settings;
 use PHPUnit\Framework\TestCase;
+use Supertext\GravTranslation\PluginHealth\InstallationReporter;
 use Supertext\GravTranslation\Sdk\Http\HttpRequest;
-use Supertext\GravTranslation\Sdk\V1\InstallationReporter;
+use Supertext\GravTranslation\Sdk\Supertext;
 
 /**
- * The plugin's glue around the SDK's InstallationReporter: state in a file, the actions the
- * plugin runs, the ping answer and the setting. The protocol itself is tested in the SDK
- * (spec/reporting.json). Nothing here talks to Supertext or the Commando Center: a fake
+ * The plugin's glue around Supertext Plugin Health's InstallationReporter (with the SDK's key
+ * check): state in a file, the actions the plugin runs, the ping answer and the setting. The
+ * protocol itself is tested in Plugin Health (plugin-health/spec/reporter.json). Nothing here talks to Supertext or the Commando Center: a fake
  * transport answers the key check (GET features) and the report.
  */
 final class ReportingTest extends TestCase
@@ -71,6 +72,7 @@ final class ReportingTest extends TestCase
         self::assertSame('0.2.0', $report['plugin']['version']);
         self::assertSame(['name' => 'Grav', 'version' => '2.2.4'], $report['system']);
         self::assertSame('PHP', $report['runtime']['name']);
+        self::assertSame(Supertext::SDK_VERSION, $report['sdk_version'], 'the bundled SDK');
         self::assertSame('https://www.example.ch', $report['site_url']);
         self::assertSame('https://www.example.ch/api/v1/supertext/ping', $report['callback']['url']);
         self::assertTrue($report['api_key_configured']);
@@ -220,5 +222,22 @@ final class ReportingTest extends TestCase
         self::assertFalse(InstallationReporter::reportsEnabled(Settings::fromArray(['version_reports' => true])->versionReports), 'the environment wins');
         putenv('SUPERTEXT_VERSION_REPORTS=1');
         self::assertTrue(InstallationReporter::reportsEnabled(Settings::fromArray(['version_reports' => false])->versionReports));
+    }
+
+    public function testAStateWrittenByTheSdk02ReporterIsKept(): void
+    {
+        $reporting = $this->reporting();
+        mkdir($this->dir);
+        $old = json_encode([
+            'reportedVersions' => $reporting->reporter()->versions(),
+            'reportedKeyStatus' => 'ok',
+            'lastFailureAt' => null,
+            'keyCheck' => ['status' => 'ok', 'checkedAt' => '2026-10-01T08:00:00Z', 'httpStatus' => 200, 'errorCode' => null, 'fingerprint' => hash('sha256', 'secret-key')],
+        ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . "\n";
+        file_put_contents($this->dir . '/reporter.json', $old);
+
+        self::assertNull($reporting->run(Reporting::ON_REQUEST, 'secret-key')?->event, 'no new installed report after the update');
+        self::assertSame([], $this->http->requests);
+        self::assertSame($old, file_get_contents($this->dir . '/reporter.json'), 'same file format');
     }
 }

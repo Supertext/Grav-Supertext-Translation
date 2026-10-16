@@ -6,6 +6,7 @@
 
 - The plugin now talks to Supertext through the official Supertext SDK for PHP, bundled with the plugin (`lib/supertext-sdk`, nothing extra to install). Translating into several languages still runs in parallel. Requests carry the plugin version in the User-Agent.
 - A language pair Supertext doesn't offer now gets its own message naming the two languages, in all four interface languages.
+- Version reports, the API key check result and the reachability ping now use [Supertext Plugin Health](https://github.com/Supertext/Commando-Center-Supertext-Translation/tree/main/plugin-health) 0.1.0 (bundled in `lib/supertext-plugin-health`); Supertext SDK updated to 0.3.0. No change for sites: settings and stored state stay as they are.
 
 ### Fixed
 

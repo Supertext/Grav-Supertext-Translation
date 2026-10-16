@@ -8,16 +8,17 @@ Grav 2 replaced its classic admin with **Admin2**, a single-page app that talks 
 
 | Piece | File | What it does |
 | --- | --- | --- |
-| Plugin class | `supertext-translation.php` | Registers the class autoloader (the plugin's classes and the bundled SDK), the API routes (`onApiRegisterRoutes`), the page-editor panel (`onApiContextPanels`), the public ping route (`onApiCollectPublicRoutes`), the key check and report after a settings save (`onApiConfigUpdated`), keeps the status field out of the config file (`onAdminSave`) and runs queued reporter work after the response (`onShutdown`). |
+| Plugin class | `supertext-translation.php` | Registers the class autoloader (the plugin's classes, the bundled SDK and Supertext Plugin Health), the API routes (`onApiRegisterRoutes`), the page-editor panel (`onApiContextPanels`), the public ping route (`onApiCollectPublicRoutes`), the key check and report after a settings save (`onApiConfigUpdated`), keeps the status field out of the config file (`onAdminSave`) and runs queued reporter work after the response (`onShutdown`). |
 | Panel | `admin-next/panels/supertext-translation.js` | A custom element that Admin2 loads from `GET /api/v1/gpm/plugins/supertext-translation/panel-script` when the toolbar button is clicked. Admin2 sets its `route`, `lang` and `type` attributes; it fires `close` and `badge`. It calls the API with the user's token (`X-API-Token`). |
 | Settings fields | `admin-next/fields/supertext-status.js`, `supertext-languages.js` | Custom Admin2 field types used in `blueprints.yaml`, loaded from `GET /api/v1/gpm/plugins/supertext-translation/fields`. `supertext-status` (field `supertext_status`, no value) shows the latest API key check and *Check again*; `supertext-languages` edits `language_codes` with one select of the Supertext languages per site language. |
 | Settings controller | `classes/Controller/SettingsController.php` | `GET /api/v1/supertext/settings` (site languages with their Supertext codes, the targets list, the latest key check, the reporting state) and `POST /api/v1/supertext/check` (*Check again*). Needs `api.config.read`. |
 | Ping controller | `classes/Controller/PingController.php` | `GET /api/v1/supertext/ping?challenge=…`, public, for the Supertext Commando Center (see *Version reports and API key check*). |
-| Reporting | `classes/Reporting/Reporting.php`, `StateStore.php`, `GravReporting.php` | The plugin's side of the Commando Center around the SDK's `InstallationReporter`: state file, the actions, deferred work, the ping answer. `GravReporting` fills in the site URL, versions and paths from Grav; the other two have no Grav dependency (unit-tested). |
+| Reporting | `classes/Reporting/Reporting.php`, `StateStore.php`, `GravReporting.php`, `ReportTransport.php` | The plugin's side of the Commando Center around Supertext Plugin Health's `InstallationReporter` (with the SDK's key check): state file, the actions, deferred work, the ping answer. `GravReporting` fills in the site URL, versions and paths from Grav; the other two have no Grav dependency (unit-tested). |
 | API controller | `classes/Controller/TranslationController.php` | `GET /api/v1/supertext/status?route=…` and `POST /api/v1/supertext/translate` (`{route, languages, overwrite}`). Extends the API plugin's `AbstractApiController`, so authentication, page ACL (`authorizePageAction(…, 'update', 'api.pages.write')`), error format (RFC 7807) and cache invalidation headers work like the core routes. |
 | Translator | `classes/PageTranslator.php` | Reads the source file, packs the front matter fields (plain text) and the body blocks (HTML) into one document with the SDK's `HtmlDocument`, sends it to Supertext for all target languages, writes `<template>.<lang>.md`, tracks states. Independent of Grav (testable). |
 | Markdown | `classes/Markdown/MarkdownDocument.php`, `InlineConverter.php` | Splits the Markdown body into blocks and back; converts inline Markdown to HTML and back. |
-| Supertext SDK | `lib/supertext-sdk/` | The bundled [Supertext SDK for PHP](https://github.com/Supertext/Supertext-API-SDK-and-Guide/tree/main/sdk/php) 0.2.1: protocol, retries, HTML packing, the list of Supertext languages, error codes, the API key check and the Commando Center reporter (see *Supertext API protocol* and *Bundled Supertext SDK*). |
+| Supertext SDK | `lib/supertext-sdk/` | The bundled [Supertext SDK for PHP](https://github.com/Supertext/Supertext-API-SDK-and-Guide/tree/main/sdk/php) 0.3.0: the client (protocol, retries, HTML packing, the list of Supertext languages, error codes) and the API key check (see *Supertext API protocol* and *Bundled Supertext SDK*). |
+| Supertext Plugin Health | `lib/supertext-plugin-health/` | The bundled [Supertext Plugin Health](https://github.com/Supertext/Commando-Center-Supertext-Translation/tree/main/plugin-health) 0.1.0 (PHP): version reports to the Commando Center, the key check result and the ping answer (see *Supertext Plugin Health*). |
 | Supertext client | `classes/Api/SupertextClient.php`, `SupertextException.php` | The plugin's layer over the SDK: translates into several languages in parallel and turns the SDK's error codes into the plugin's translatable reasons. |
 | Version | `classes/PluginVersion.php` | The version from `blueprints.yaml`, sent to Supertext in the User-Agent (`Grav-Supertext-Translation/<version>`) and in the version reports. |
 | Settings | `classes/Settings.php`, `blueprints.yaml`, `supertext-translation.yaml` | Settings with defaults, the Admin2 form, defaults file. |
@@ -117,19 +118,29 @@ The plugin ships the SDK in `lib/supertext-sdk/`: its PHP sources, `LICENSE`, `C
 - Never edit the copy: fix the SDK in its own repository, then re-run the script. PHPStan reads it (`scanDirectories`) but analyses only the plugin's own code.
 - The SDK's built-in HTTP transport uses ext-curl, as the plugin did before.
 
+### Supertext Plugin Health
+
+The version reports, the key check result and the ping answer (see *Version reports and API key check*) come from [Supertext Plugin Health](https://github.com/Supertext/Commando-Center-Supertext-Translation/tree/main/plugin-health), a dependency-free library in the Commando Center repository (`plugin-health/php`). It has been out of the SDK since SDK 0.3.0 and doesn't need it: `Reporting` passes it the SDK's key check (`CallableKeyChecker` with `Client::checkApiKey()` and `Protocol::apiKeyFingerprint()`) and `Supertext::SDK_VERSION`. The plugin ships it in `lib/supertext-plugin-health/` like the SDK: PHP sources, `LICENSE`, `COMMIT`, `VERSION` and a short README, namespace `Supertext\PluginHealth` changed to `Supertext\GravTranslation\PluginHealth` (and `…\PluginHealth\Http`), loaded by the plugin's autoloader and mapped in `composer.json`.
+
+- Update it with `scripts/vendor-plugin-health.sh <tag>` (e.g. `plugin-health-v0.1.0`; default `main`; `PLUGIN_HEALTH_DIR=<clone>` uses a local clone of the Commando Center repository), run `composer test`, and commit with a CHANGELOG entry.
+- Never edit the copy: fix it in Commando-Center-Supertext-Translation/plugin-health, then re-run the script. PHPStan reads it (`scanDirectories`) but doesn't analyse it.
+- Its built-in transport uses ext-curl too; in the tests `ReportTransport` sends its reports through the SDK transport given to `Reporting`.
+
 ## Version reports and API key check
 
-Every Supertext plugin checks its API key automatically and reports its versions to the Supertext Commando Center (protocol: Commando-Center-Supertext-Translation → `docs/DEVELOPER.md` → *Report protocol*). The protocol is the SDK's `InstallationReporter`; `classes/Reporting/` only feeds it:
+Every Supertext plugin checks its API key automatically and reports its versions to the Supertext Commando Center (protocol: Commando-Center-Supertext-Translation → `docs/DEVELOPER.md` → *Report protocol*). The protocol is Supertext Plugin Health's `InstallationReporter`; `classes/Reporting/` only feeds it:
 
 | Option | Value |
 | --- | --- |
 | `pluginName` | `Grav-Supertext-Translation` (the GitHub repository name) |
 | `pluginVersion` | `PluginVersion::get()` (from `blueprints.yaml`) |
-| `systemName`, `systemVersion` | `Grav`, `GRAV_VERSION` (runtime: PHP and `PHP_VERSION`, the SDK's default) |
+| `systemName`, `systemVersion` | `Grav`, `GRAV_VERSION` (runtime: PHP and `PHP_VERSION`, Plugin Health's default) |
+| `sdkVersion` | the SDK's `Supertext::SDK_VERSION` |
+| `keyChecker` | the SDK's `checkApiKey()` and `apiKeyFingerprint()` (`CallableKeyChecker`) |
 | `siteUrl` | `system.custom_base_url` if absolute, else `Uri::rootUrl(true)` (with a sub-folder if Grav runs in one) |
 | `callbackUrl` | site URL + the API plugin's base (`plugins.api.route`/`version_prefix`, default `/api/v1`) + `/supertext/ping` |
 | `enabled` | `InstallationReporter::reportsEnabled($settings->versionReports)`: the `version_reports` setting, overridden by `SUPERTEXT_VERSION_REPORTS` |
-| `apiBaseUrl` | the `api_url` setting (or `SUPERTEXT_API_URL`), for the key check |
+| key check API | the `api_url` setting (or `SUPERTEXT_API_URL`), the SDK client's base URL |
 
 **When it runs:**
 
@@ -140,11 +151,11 @@ Every Supertext plugin checks its API key automatically and reports its versions
 | A translation got 401/403 | `TranslationController::translate()` (from the result's `status`) | `authenticationFailed`, after the response. |
 | *Check again* on the settings page | `SettingsController::check()` | `testConnection`, during the request. |
 
-The plugin has no CLI command, so `reportCheck` isn't used. Nothing here ever throws or blocks a save or translation: the SDK never throws, `Reporting::run()` catches everything else, and a failed report waits an hour (the SDK's state).
+The plugin has no CLI command, so `reportCheck` isn't used. Nothing here ever throws or blocks a save or translation: Plugin Health never throws, `Reporting::run()` catches everything else, and a failed report waits an hour (in the state).
 
-**State:** the reporter's JSON state (`ReporterState`: last reported versions and key status, last failure, latest key check with the key's SHA-256 fingerprint, never the key) is in `user/data/supertext-translation/reporter.json` (`user-data://`), written atomically by `StateStore`; a missing or broken file is the empty state ("never reported").
+**State:** the reporter's JSON state (`ReporterState`: last reported versions and key status, last failure, latest key check with the key's SHA-256 fingerprint, never the key; the same JSON the SDK 0.2 reporter wrote, so the switch to Plugin Health sent no new `installed` report) is in `user/data/supertext-translation/reporter.json` (`user-data://`), written atomically by `StateStore`; a missing or broken file is the empty state ("never reported").
 
-**Ping:** `PingController` answers `InstallationReporter::pingResponse()` as it is (status, `Content-Type: application/json`, `Cache-Control: no-store`, body); 404 while reports are off. The route is registered with the other routes and made public with `onApiCollectPublicRoutes` (`GET /api/v1/supertext/ping` only), so the API plugin skips authentication for it. API responses aren't part of Grav's page cache.
+**Ping:** `PingController` answers Plugin Health's `InstallationReporter::pingResponse()` as it is (status, `Content-Type: application/json`, `Cache-Control: no-store`, body); 404 while reports are off. The route is registered with the other routes and made public with `onApiCollectPublicRoutes` (`GET /api/v1/supertext/ping` only), so the API plugin skips authentication for it. API responses aren't part of Grav's page cache.
 
 **Settings page:** `blueprints.yaml` has the toggle `version_reports` (default on) and the read-only field `supertext_status` (type `supertext-status`, `validate.ignore`; `onAdminSave` also drops it, because the API plugin keeps unknown keys). The field shows the latest check with the Commando Center's messages and links, and a note when `SUPERTEXT_VERSION_REPORTS` overrides the toggle.
 
@@ -183,7 +194,7 @@ The stand-in also answers the Commando Center's reports (`POST /api/v1/report`, 
 - `SupertextClientTest`: the plugin's use of the SDK: every language submitted before waiting, the request fields the SDK sends, per-language failures, a missing or refused key, cleanup, and every SDK error code mapped to a translatable reason.
 - `LanguageCodesTest`: Grav codes through the settings and the SDK's `Languages` (mapping wins, exact codes, bare `de`/`en`/`zh` and the old defaults `es-ES`/`sl-SI` are `unsupported_language`, sources in their source form, formal/informal only where Supertext offers it, the settings from YAML).
 - `PageTranslatorTest`: creating, states (missing/current/outdated/edited/manual), keeping published state, overwrite protection, an unmapped target (not sent, the others translated) and source (nothing sent), formal address per target, settings.
-- `ReportingTest` (with `FakeCenter`, a fake transport for the key check and the report): installed/settings_saved after a save, nothing or `upgraded` on requests, a changed key, 401/403 from a translation, *Check again*, reports off (key still checked), missing key, an unreachable center and the hour's wait, work queued until after the response, broken or unwritable state files, the key never stored or sent, the ping answers, the setting and `SUPERTEXT_VERSION_REPORTS`.
+- `ReportingTest` (with `FakeCenter`, a fake transport for the key check and the report): installed/settings_saved after a save, nothing or `upgraded` on requests, a changed key, 401/403 from a translation, *Check again*, reports off (key still checked), missing key, an unreachable center and the hour's wait, work queued until after the response, broken or unwritable state files, the key never stored or sent, the ping answers, the setting and `SUPERTEXT_VERSION_REPORTS`, the SDK version in the report, and a state file written by the SDK 0.2 reporter kept as it is (no new `installed`).
 - `LanguagesTest`: `languages.yaml` complete in English, German, French and Italian, and every key used by the settings, the panel, the fields and the PHP code present.
 
 Also checked by hand (and by the screenshot script) in a real Grav 2.2.4 with Admin2: the panel loads, the editor account can translate, a save in Admin2 of an unchanged translation keeps it *current*, an edit makes it *edited*; the ping route answers without login; a save of the plugin settings in Admin2 reports `settings_saved` to the stand-in, refreshes the key check and doesn't write `supertext_status`; an unmapped language is refused with *has no Supertext language yet* while the others are translated.

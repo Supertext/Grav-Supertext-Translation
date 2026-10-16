@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Grav\Plugin\SupertextTranslation\Reporting;
 
-use Supertext\GravTranslation\Sdk\V1\ReporterState;
+use Supertext\GravTranslation\PluginHealth\ReporterState;
 
 /**
  * Where the plugin keeps the Supertext reporter's state between requests: one small JSON file,
  * user/data/supertext-translation/reporter.json (Grav's place for plugin data, next to the
- * site's content, never in the config). The JSON is the SDK's ReporterState as it is: what was
+ * site's content, never in the config). The JSON is Plugin Health's ReporterState as it is (the same the SDK 0.2 reporter wrote): what was
  * last reported, the latest API key check and the key's fingerprint, never the key itself.
  *
  * Reading never fails (a missing or broken file is the empty state); writing failures are

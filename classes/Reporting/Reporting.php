@@ -4,18 +4,22 @@ declare(strict_types=1);
 
 namespace Grav\Plugin\SupertextTranslation\Reporting;
 
+use Supertext\GravTranslation\PluginHealth\CallableKeyChecker;
+use Supertext\GravTranslation\PluginHealth\InstallationReporter;
+use Supertext\GravTranslation\PluginHealth\KeyCheck;
+use Supertext\GravTranslation\PluginHealth\PingResponse;
+use Supertext\GravTranslation\PluginHealth\ReporterResult;
 use Supertext\GravTranslation\Sdk\Http\HttpTransport;
-use Supertext\GravTranslation\Sdk\V1\ApiKeyCheck;
-use Supertext\GravTranslation\Sdk\V1\InstallationReporter;
-use Supertext\GravTranslation\Sdk\V1\PingResponse;
+use Supertext\GravTranslation\Sdk\Supertext;
+use Supertext\GravTranslation\Sdk\V1\Client;
 use Supertext\GravTranslation\Sdk\V1\Protocol;
-use Supertext\GravTranslation\Sdk\V1\ReporterResult;
 
 /**
  * The plugin's side of the Supertext Commando Center: version reports, the automatic API key
  * check and the callback ping (Commando-Center-Supertext-Translation → docs/DEVELOPER.md →
- * Report protocol). The protocol itself is the SDK's InstallationReporter; this class only gives
- * it what Grav knows (site URL, versions, the ping URL) and keeps its state in a StateStore.
+ * Report protocol). The protocol itself is Supertext Plugin Health's InstallationReporter
+ * (lib/supertext-plugin-health), with the Supertext SDK's checkApiKey() as key checker; this class
+ * only gives it what Grav knows (site URL, versions, the ping URL) and keeps its state in a StateStore.
  *
  * It has no Grav dependency (GravReporting builds it from Grav), so it is unit-tested on its
  * own. Nothing here ever throws: reporting must never break a save or a translation.
@@ -39,6 +43,7 @@ final class Reporting
     /**
      * @param bool $enabled InstallationReporter::reportsEnabled() of the setting
      * @param (callable(): float)|null $now wall-clock time, for tests
+     * @param HttpTransport|null $transport the SDK's transport for the key check and (adapted) the reports; null: cURL
      * @param (callable(float): void)|null $sleep waits between 429 retries of the key check, for tests
      */
     public function __construct(
@@ -64,13 +69,28 @@ final class Reporting
             pluginName: self::PLUGIN_NAME,
             pluginVersion: $this->pluginVersion,
             systemName: 'Grav',
+            keyChecker: $this->keyChecker(),
             systemVersion: $this->gravVersion,
+            sdkVersion: Supertext::SDK_VERSION,
             callbackUrl: $this->callbackUrl,
             reportUrl: $this->reportUrl,
-            transport: $this->transport,
-            apiBaseUrl: $this->apiBaseUrl,
-            sleep: is_callable($this->sleep) ? $this->sleep : null,
+            transport: $this->transport !== null ? new ReportTransport($this->transport) : null,
             now: is_callable($this->now) ? $this->now : null,
+        );
+    }
+
+    /** The SDK's key check (GET features) against the configured API. */
+    private function keyChecker(): CallableKeyChecker
+    {
+        $baseUrl = $this->apiBaseUrl;
+        $userAgent = self::PLUGIN_NAME . '/' . $this->pluginVersion;
+        $transport = $this->transport;
+        $sleep = is_callable($this->sleep) ? $this->sleep : null;
+        $now = is_callable($this->now) ? $this->now : null;
+
+        return new CallableKeyChecker(
+            static fn (string $key) => (new Client($key, $baseUrl, userAgent: $userAgent, transport: $transport, sleep: $sleep, now: $now))->checkApiKey(),
+            [Protocol::class, 'apiKeyFingerprint'],
         );
     }
 
@@ -125,7 +145,7 @@ final class Reporting
     }
 
     /** The latest stored API key check, for the settings page. */
-    public function lastCheck(): ?ApiKeyCheck
+    public function lastCheck(): ?KeyCheck
     {
         try {
             return $this->store->load()->keyCheck;
