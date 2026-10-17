@@ -69,7 +69,10 @@ final class SettingsController extends AbstractApiController
                 'is_source' => $code === $source,
                 // What the administrator chose, and what Supertext gets.
                 'mapped' => $settings->languageCodes[strtolower($code)] ?? null,
-                'exact' => Languages::matchTarget($code),
+                // What the select preselects while nothing is chosen: the exact Supertext code,
+                // else the SDK's default (de → de-DE); null: no default, the language needs a choice.
+                'suggested' => Languages::suggestTarget($code),
+                'is_default' => Languages::defaultTarget($code) !== null,
                 'target' => $target,
                 'source_code' => $code === $source ? $settings->sourceCodeOrNull($code) : null,
                 'politeness_supported' => $target !== null ? Languages::supportsPoliteness($target) : null,
@@ -80,7 +83,7 @@ final class SettingsController extends AbstractApiController
 
         return [
             'languages' => $languages,
-            'targets' => Languages::TARGETS,
+            'targets' => Languages::targetOptions(),
             'politeness' => $settings->politeness,
             'api_key_configured' => $settings->apiKey !== '',
             'key_check' => $check === null ? null : [

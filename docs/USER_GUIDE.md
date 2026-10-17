@@ -27,7 +27,7 @@ The Supertext panel and its messages appear in your admin language (English, Ger
 
 You can close the panel with **×** at any time. Closing it does not stop a translation that is already running.
 
-Next to each language the panel shows the Supertext language it is translated into, e.g. *de-CH* for Swiss German. A language marked **not mapped** has no Supertext language yet: it can't be ticked, and a note at the top names it. Your administrator chooses the Supertext language for it in the plugin settings.
+Next to each language the panel shows the Supertext language it is translated into, e.g. *de-CH* for Swiss German. Languages without a choice in the plugin settings use Supertext's default (e.g. *de-DE* for `de`, *en-US* for `en`). A language marked **not mapped** has no default either (e.g. `gsw`): it can't be ticked, and a note at the top names it. Your administrator chooses the Supertext language for it in the plugin settings.
 
 ## Review and publish a translation
 

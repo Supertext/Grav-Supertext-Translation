@@ -1,13 +1,15 @@
 /**
  * `supertext-languages` field — the setting `language_codes`: which Supertext language each
  * language of the site is. One row per site language with a select of the languages Supertext
- * offers (name and code), pre-selected with the Supertext code the Grav code is exactly equal to
- * (es, nl, de-CH). Bare codes such as de or fr have no such match: they show "Not mapped" until
- * the administrator chooses a variant.
+ * offers (the SDK's Languages::targetOptions(): name in the admin language and code), preselected
+ * with the saved choice, else the SDK's suggestTarget(): the exact Supertext code (es, nl, de-CH),
+ * else the default (de → de-DE, zh-TW → zh-Hant, es-ES → es). Codes without a default (en-IE,
+ * de-LI, gsw) show "— choose —" and "Not mapped" until the administrator chooses one.
  *
  * Value: a map { grav code: Supertext code } of the rows the administrator chose; rows left on
- * their exact match aren't stored (the plugin finds them on its own). Entries for languages the
- * site no longer has are kept.
+ * their suggestion aren't stored (the plugin uses the same default on its own). Entries for
+ * languages the site no longer has are kept. The server checks the codes when saving
+ * (Settings::sanitizeLanguageCodes()).
  *
  * Admin2 loads this file through GET /api/v1/gpm/plugins/supertext-translation/fields and
  * defines it under the tag in window.__GRAV_FIELD_TAG. Data: GET /api/v1/supertext/settings
@@ -21,8 +23,9 @@ const KEY_PREFIX = 'PLUGIN_SUPERTEXT_TRANSLATION.FIELDS.';
 const EN = {
     LOAD_ERROR: 'The Supertext status could not be loaded ({error}). Enable the plugin, save the settings and reload this page.',
     LANG_SOURCE: 'source language, sent as {code}',
-    LANG_CHOOSE: 'Choose a Supertext language',
-    LANG_NOT_MAPPED: 'Not mapped: choose a Supertext language, or this language can’t be translated.',
+    LANG_CHOOSE: '— choose —',
+    LANG_DEFAULT: 'Default for {code}: choose another Supertext language if you mean a different variant.',
+    LANG_NOT_MAPPED: 'Not mapped: Supertext has no default for {code}. Choose a Supertext language, or this language can’t be translated.',
     LANG_NO_POLITENESS: 'Supertext offers no formal or informal form for this language: Supertext’s default is used.',
     LANG_OTHER: '{code} (not in the list)',
     LANG_UNAVAILABLE: 'Enable the plugin and reload this page to choose the languages.',
@@ -34,6 +37,18 @@ function t(key, params) {
         return i18n.t(KEY_PREFIX + key, params);
     }
     return String(EN[key] ?? key).replace(/\{(\w+)\}/g, (match, name) => (params && name in params ? String(params[name]) : match));
+}
+
+/** A target's name in the admin language where the browser knows it (Intl.DisplayNames), else the SDK's English name. */
+function targetName(target) {
+    const locale = window.__GRAV_I18N && window.__GRAV_I18N.locale;
+    if (locale && typeof Intl !== 'undefined' && Intl.DisplayNames && !String(target.code).includes('-u-')) {
+        try {
+            const name = new Intl.DisplayNames([locale], { type: 'language' }).of(target.code);
+            if (name && name.toLowerCase() !== String(target.code).toLowerCase()) return name;
+        } catch (e) { /* fall back to the English name */ }
+    }
+    return target.name;
 }
 
 function esc(text) {
@@ -139,24 +154,29 @@ class SupertextLanguagesField extends HTMLElement {
             body += '<ul class="stl-rows">';
             for (const lang of d.languages || []) {
                 const chosen = this._mapped(lang.code);
-                const selected = chosen || lang.exact || '';
+                const selected = chosen || lang.suggested || '';
                 const known = selected ? this._target(selected) : null;
                 let options = `<option value="" ${selected ? '' : 'selected'}>${esc(t('LANG_CHOOSE'))}</option>`;
                 if (selected && !known) {
                     options += `<option value="${esc(selected)}" selected>${esc(t('LANG_OTHER', { code: selected }))}</option>`;
                 }
-                for (const target of d.targets || []) {
+                const targets = (d.targets || []).map((target) => ({ ...target, label: targetName(target) }));
+                targets.sort((a, b) => a.label.localeCompare(b.label, (window.__GRAV_I18N && window.__GRAV_I18N.locale) || undefined));
+                for (const target of targets) {
                     const isSelected = known && known.code === target.code;
-                    options += `<option value="${esc(target.code)}" ${isSelected ? 'selected' : ''}>${esc(target.name)} (${esc(target.code)})</option>`;
+                    options += `<option value="${esc(target.code)}" ${isSelected ? 'selected' : ''}>${esc(target.label)} (${esc(target.code)})</option>`;
                 }
                 let notes = '';
                 // Sources are bare languages: one mapping serves both directions (de-CH → de), and a
                 // bare Grav code such as en is a source language on its own.
                 const sourceCode = !lang.is_source ? null : selected ? key(selected).split('-')[0] : lang.source_code;
+                if (!chosen && selected && lang.is_default) {
+                    notes += `<div class="stl-note">${esc(t('LANG_DEFAULT', { code: lang.code }))}</div>`;
+                }
                 if (sourceCode) {
                     notes += `<div class="stl-note">${esc(t('LANG_SOURCE', { code: sourceCode }))}</div>`;
                 } else if (!selected) {
-                    notes += `<div class="stl-note stl-warn" data-testid="supertext-not-mapped">${esc(t('LANG_NOT_MAPPED'))}</div>`;
+                    notes += `<div class="stl-note stl-warn" data-testid="supertext-not-mapped">${esc(t('LANG_NOT_MAPPED', { code: lang.code }))}</div>`;
                 } else if (d.politeness && d.politeness !== 'default' && known && known.politeness === false) {
                     notes += `<div class="stl-note stl-info">${esc(t('LANG_NO_POLITENESS'))}</div>`;
                 }

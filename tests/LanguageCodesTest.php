@@ -12,7 +12,8 @@ use Supertext\GravTranslation\Sdk\V1\SupertextException as SdkException;
 /**
  * Grav language codes => Supertext codes, through the plugin's setting (language_codes) and
  * the bundled SDK's Languages (whose own rules are tested in the SDK against spec/languages.json).
- * No guessing: the mapping wins, else an exact Supertext code, else unsupported_language.
+ * The mapping wins, else an exact Supertext code, else the SDK's default (de → de-DE), else
+ * unsupported_language.
  */
 final class LanguageCodesTest extends TestCase
 {
@@ -27,6 +28,12 @@ final class LanguageCodesTest extends TestCase
         yield 'bare Supertext target' => ['es', [], 'es'];
         yield 'script' => ['zh-hant', [], 'zh-Hant'];
         yield 'blank mapping ignored' => ['nl', ['nl' => ' '], 'nl'];
+        yield 'default for a bare de' => ['de', [], 'de-DE'];
+        yield 'default for a bare en' => ['en', [], 'en-US'];
+        yield 'default for a bare zh' => ['zh', [], 'zh-Hans'];
+        yield 'default for zh-tw' => ['zh-tw', [], 'zh-Hant'];
+        yield 'region of a bare target' => ['es-ES', [], 'es'];
+        yield 'mapping wins over the default' => ['de', ['de' => 'de-CH'], 'de-CH'];
     }
 
     /** @param array<string, string> $mapping */
@@ -42,11 +49,10 @@ final class LanguageCodesTest extends TestCase
     /** @return iterable<string, array{string}> */
     public static function unmapped(): iterable
     {
-        yield 'bare de has no default region any more' => ['de'];
-        yield 'bare en' => ['en'];
-        yield 'bare zh' => ['zh'];
-        yield 'old default es-ES is not a Supertext code' => ['es-ES'];
-        yield 'old default sl-SI' => ['sl-SI'];
+        yield 'no guessed region for en-IE' => ['en-IE'];
+        yield 'no guessed region for de-LI' => ['de-LI'];
+        yield 'Swiss German needs a dialect' => ['gsw'];
+        yield 'sr-RS needs a script' => ['sr-RS'];
         yield 'unknown' => ['xx'];
     }
 
@@ -112,7 +118,23 @@ final class LanguageCodesTest extends TestCase
         self::assertNull(Settings::fromArray([])->versionReports, 'not set: the SDK treats it as on');
 
         // The older list form of the setting still works.
+        self::assertSame(['de' => 'de-AT'], Settings::fromArray(['language_codes' => [['grav' => 'de', 'supertext' => 'de-AT']]])->languageCodes);
         $rows = Settings::fromArray(['language_codes' => [['grav' => 'de', 'supertext' => 'de-AT']]]);
         self::assertSame('de-AT', $rows->targetCode('de'));
+    }
+
+    public function testSanitizeLanguageCodesOnSave(): void
+    {
+        self::assertSame(
+            ['de' => 'de-CH', 'fr-be' => 'fr-FR', 'zh' => 'zh-Hant'],
+            Settings::sanitizeLanguageCodes(['de' => ' de_ch ', 'fr-be' => 'fr-FR', 'it' => '', 'xx' => 'xx-YY', 'zh' => 'ZH-hant']),
+        );
+        // The older list of rows becomes a map, nothing configured is lost.
+        self::assertSame(
+            ['de' => 'de-CH', 'en' => 'en-GB'],
+            Settings::sanitizeLanguageCodes([['grav' => 'de', 'supertext' => 'de-CH'], ['grav' => 'en', 'supertext' => 'en-GB'], ['grav' => '', 'supertext' => 'fr-FR']]),
+        );
+        self::assertSame([], Settings::sanitizeLanguageCodes(null));
+        self::assertSame([], Settings::sanitizeLanguageCodes('de=de-CH'));
     }
 }

@@ -30,7 +30,7 @@ en:
       SOURCE_LANGUAGE_PLACEHOLDER: Site default language
       SOURCE_LANGUAGE_HELP: Grav language code the translations are made from, e.g. "en". Empty means the site's default language.
       LANGUAGE_CODES: Supertext language codes
-      LANGUAGE_CODES_HELP: 'Which Supertext language each site language is translated into and from. A Grav code that is exactly a Supertext code (es, nl, de-CH) is used as it is. A bare de, en, fr, it or pt needs a choice, because only you know the variant (de-CH or de-DE, for example).'
+      LANGUAGE_CODES_HELP: 'Which Supertext language each site language is translated into and from. Each language is preselected with its Supertext code (es, nl, de-CH) or its default (de → de-DE, en → en-US, fr → fr-FR, it → it-IT, pt → pt-PT, zh → zh-Hans); choose another variant where you mean one, e.g. de-CH for Swiss German. A language without a default (en-IE, de-LI, gsw) shows — choose — and can’t be translated until you choose one.'
       POLITENESS: Form of address
       POLITENESS_DEFAULT: Supertext default
       POLITENESS_MORE: Formal (Sie, vous)
@@ -133,8 +133,9 @@ en:
         REPORTS_ENV_ON: 'The environment variable SUPERTEXT_VERSION_REPORTS={value} turns version reports on, whatever the setting below says.'
         LOAD_ERROR: 'The Supertext status could not be loaded ({error}). Enable the plugin, save the settings and reload this page.'
         LANG_SOURCE: 'source language, sent as {code}'
-        LANG_CHOOSE: 'Choose a Supertext language'
-        LANG_NOT_MAPPED: 'Not mapped: choose a Supertext language, or this language can’t be translated.'
+        LANG_CHOOSE: '— choose —'
+        LANG_NOT_MAPPED: 'Not mapped: Supertext has no default for {code}. Choose a Supertext language, or this language can’t be translated.'
+        LANG_DEFAULT: 'Default for {code}: choose another Supertext language if you mean a different variant.'
         LANG_NO_POLITENESS: 'Supertext offers no formal or informal form for this language: Supertext’s default is used.'
         LANG_OTHER: '{code} (not in the list)'
         LANG_UNAVAILABLE: 'Enable the plugin and reload this page to choose the languages.'
@@ -159,7 +160,7 @@ de:
       SOURCE_LANGUAGE_PLACEHOLDER: Standardsprache der Website
       SOURCE_LANGUAGE_HELP: Grav-Sprachcode, aus dem übersetzt wird, z. B. "en". Leer bedeutet die Standardsprache der Website.
       LANGUAGE_CODES: Supertext-Sprachcodes
-      LANGUAGE_CODES_HELP: 'In welche Supertext-Sprache jede Sprache der Website übersetzt wird und aus welcher. Ein Grav-Code, der genau einem Supertext-Code entspricht (es, nl, de-CH), wird unverändert verwendet. Für ein de, en, fr, it oder pt ohne Region wählen Sie die Variante, denn nur Sie wissen, welche gemeint ist (zum Beispiel de-CH oder de-DE).'
+      LANGUAGE_CODES_HELP: 'In welche Supertext-Sprache jede Sprache der Website übersetzt wird und aus welcher. Vorausgewählt ist ihr Supertext-Code (es, nl, de-CH) oder ihr Standard (de → de-DE, en → en-US, fr → fr-FR, it → it-IT, pt → pt-PT, zh → zh-Hans); wählen Sie eine andere Variante, wenn Sie diese meinen, zum Beispiel de-CH für Schweizer Hochdeutsch. Eine Sprache ohne Standard (en-IE, de-LI, gsw) zeigt — wählen — und kann erst übersetzt werden, wenn Sie eine Sprache wählen.'
       POLITENESS: Anrede
       POLITENESS_DEFAULT: Supertext-Standard
       POLITENESS_MORE: Formell (Sie, vous)
@@ -262,8 +263,9 @@ de:
         REPORTS_ENV_ON: 'Die Umgebungsvariable SUPERTEXT_VERSION_REPORTS={value} schaltet die Versionsinformationen ein, unabhängig von der Einstellung unten.'
         LOAD_ERROR: 'Der Supertext-Status konnte nicht geladen werden ({error}). Aktivieren Sie das Plugin, speichern Sie die Einstellungen und laden Sie diese Seite neu.'
         LANG_SOURCE: 'Ausgangssprache, gesendet als {code}'
-        LANG_CHOOSE: 'Supertext-Sprache wählen'
-        LANG_NOT_MAPPED: 'Nicht zugeordnet: Wählen Sie eine Supertext-Sprache, sonst kann in diese Sprache nicht übersetzt werden.'
+        LANG_CHOOSE: '— wählen —'
+        LANG_NOT_MAPPED: 'Nicht zugeordnet: Supertext hat keinen Standard für {code}. Wählen Sie eine Supertext-Sprache, sonst kann in diese Sprache nicht übersetzt werden.'
+        LANG_DEFAULT: 'Standard für {code}: Wählen Sie eine andere Supertext-Sprache, wenn Sie eine andere Variante meinen.'
         LANG_NO_POLITENESS: 'Supertext bietet für diese Sprache keine formelle oder informelle Anrede an: Es gilt die Standard-Anrede von Supertext.'
         LANG_OTHER: '{code} (nicht in der Liste)'
         LANG_UNAVAILABLE: 'Aktivieren Sie das Plugin und laden Sie diese Seite neu, um die Sprachen zu wählen.'
@@ -288,7 +290,7 @@ fr:
       SOURCE_LANGUAGE_PLACEHOLDER: Langue par défaut du site
       SOURCE_LANGUAGE_HELP: Code de langue Grav à partir duquel les traductions sont faites, par ex. "en". Vide signifie la langue par défaut du site.
       LANGUAGE_CODES: Codes de langue Supertext
-      LANGUAGE_CODES_HELP: 'La langue Supertext vers laquelle et depuis laquelle chaque langue du site est traduite. Un code Grav identique à un code Supertext (es, nl, de-CH) est utilisé tel quel. Pour de, en, fr, it ou pt sans région, choisissez la variante, car vous seul savez laquelle est voulue (par exemple de-CH ou de-DE).'
+      LANGUAGE_CODES_HELP: 'La langue Supertext vers laquelle et depuis laquelle chaque langue du site est traduite. Chaque langue est présélectionnée avec son code Supertext (es, nl, de-CH) ou sa valeur par défaut (de → de-DE, en → en-US, fr → fr-FR, it → it-IT, pt → pt-PT, zh → zh-Hans) ; choisissez une autre variante si c’est celle que vous voulez, par exemple fr-CH pour le français de Suisse. Une langue sans valeur par défaut (en-IE, de-LI, gsw) affiche — choisir — et ne peut être traduite qu’une fois une langue choisie.'
       POLITENESS: Forme d’adresse
       POLITENESS_DEFAULT: Valeur par défaut de Supertext
       POLITENESS_MORE: Formel (Sie, vous)
@@ -391,8 +393,9 @@ fr:
         REPORTS_ENV_ON: 'La variable d’environnement SUPERTEXT_VERSION_REPORTS={value} active l’envoi des informations de version, quel que soit le réglage ci-dessous.'
         LOAD_ERROR: 'Le statut Supertext n’a pas pu être chargé ({error}). Activez le plugin, enregistrez les paramètres et rechargez cette page.'
         LANG_SOURCE: 'langue source, envoyée comme {code}'
-        LANG_CHOOSE: 'Choisir une langue Supertext'
-        LANG_NOT_MAPPED: 'Non associée : choisissez une langue Supertext, sinon cette langue ne peut pas être traduite.'
+        LANG_CHOOSE: '— choisir —'
+        LANG_NOT_MAPPED: 'Non associée : Supertext n’a pas de valeur par défaut pour {code}. Choisissez une langue Supertext, sinon cette langue ne peut pas être traduite.'
+        LANG_DEFAULT: 'Valeur par défaut pour {code} : choisissez une autre langue Supertext si vous voulez une autre variante.'
         LANG_NO_POLITENESS: 'Supertext ne propose pas de forme formelle ou informelle pour cette langue : la valeur par défaut de Supertext est utilisée.'
         LANG_OTHER: '{code} (absent de la liste)'
         LANG_UNAVAILABLE: 'Activez le plugin et rechargez cette page pour choisir les langues.'
@@ -417,7 +420,7 @@ it:
       SOURCE_LANGUAGE_PLACEHOLDER: Lingua predefinita del sito
       SOURCE_LANGUAGE_HELP: Codice lingua Grav da cui vengono fatte le traduzioni, ad es. "en". Vuoto significa la lingua predefinita del sito.
       LANGUAGE_CODES: Codici lingua Supertext
-      LANGUAGE_CODES_HELP: 'La lingua Supertext in cui e da cui viene tradotta ogni lingua del sito. Un codice Grav identico a un codice Supertext (es, nl, de-CH) viene usato così com’è. Per de, en, fr, it o pt senza regione scelga la variante, perché solo Lei sa quale è intesa (ad esempio de-CH o de-DE).'
+      LANGUAGE_CODES_HELP: 'La lingua Supertext in cui e da cui viene tradotta ogni lingua del sito. Ogni lingua è preselezionata con il suo codice Supertext (es, nl, de-CH) o con il suo valore predefinito (de → de-DE, en → en-US, fr → fr-FR, it → it-IT, pt → pt-PT, zh → zh-Hans); scelga un’altra variante se intende quella, ad esempio it-CH per l’italiano svizzero. Una lingua senza valore predefinito (en-IE, de-LI, gsw) mostra — scegliere — e può essere tradotta solo dopo che avrà scelto una lingua.'
       POLITENESS: Forma di cortesia
       POLITENESS_DEFAULT: Impostazione predefinita di Supertext
       POLITENESS_MORE: Formale (Sie, vous)
@@ -520,8 +523,9 @@ it:
         REPORTS_ENV_ON: 'La variabile d’ambiente SUPERTEXT_VERSION_REPORTS={value} attiva l’invio delle informazioni sulla versione, indipendentemente dall’impostazione qui sotto.'
         LOAD_ERROR: 'Non è stato possibile caricare lo stato Supertext ({error}). Attivi il plugin, salvi le impostazioni e ricarichi questa pagina.'
         LANG_SOURCE: 'lingua di partenza, inviata come {code}'
-        LANG_CHOOSE: 'Scelga una lingua Supertext'
-        LANG_NOT_MAPPED: 'Non associata: scelga una lingua Supertext, altrimenti questa lingua non può essere tradotta.'
+        LANG_CHOOSE: '— scegliere —'
+        LANG_NOT_MAPPED: 'Non associata: Supertext non ha un valore predefinito per {code}. Scelga una lingua Supertext, altrimenti questa lingua non può essere tradotta.'
+        LANG_DEFAULT: 'Valore predefinito per {code}: scelga un’altra lingua Supertext se intende un’altra variante.'
         LANG_NO_POLITENESS: 'Supertext non offre una forma di cortesia o informale per questa lingua: viene usata l’impostazione predefinita di Supertext.'
         LANG_OTHER: '{code} (non nell’elenco)'
         LANG_UNAVAILABLE: 'Attivi il plugin e ricarichi questa pagina per scegliere le lingue.'

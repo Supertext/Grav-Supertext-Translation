@@ -4,6 +4,7 @@
 
 ### Changed
 
+- **Default Supertext languages** (bundled Supertext SDK 0.4.0): a site language you haven't chosen a Supertext language for now uses its default instead of failing: `de` → `de-DE`, `en` → `en-US`, `fr` → `fr-FR`, `it` → `it-IT`, `pt` → `pt-PT`, `zh` → `zh-Hans`, `zh-tw` → `zh-Hant`, `es-es` → `es`. The lists under *Supertext language codes* are preselected with it (*Default for …*), name the languages in your admin language, and only languages without a default (`en-ie`, `de-li`, `gsw`, …) show *— choose —* and *Not mapped*. Saved choices are kept and still win; when saving, only codes Supertext offers are stored (an older list of rows is converted to the current form). If you want Swiss German or another variant, check the lists after updating.
 - The plugin now talks to Supertext through the official Supertext SDK for PHP, bundled with the plugin (`lib/supertext-sdk`, nothing extra to install). Translating into several languages still runs in parallel. Requests carry the plugin version in the User-Agent.
 - A language pair Supertext doesn't offer now gets its own message naming the two languages, in all four interface languages.
 - Version reports, the API key check result and the reachability ping now use [Supertext Plugin Health](https://github.com/Supertext/Commando-Center-Supertext-Translation/tree/main/plugin-health) 0.1.0 (bundled in `lib/supertext-plugin-health`); Supertext SDK updated to 0.3.0. No change for sites: settings and stored state stay as they are.

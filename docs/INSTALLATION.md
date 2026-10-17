@@ -87,14 +87,25 @@ Grav's own theme has no language menu; visitors reach the languages under `/de/`
 
 ### Supertext languages
 
-Supertext needs to know exactly which language variant each site language is: Swiss or German German, British or American English. The plugin never guesses. Under **Plugins → Supertext Translation → Supertext language codes** every site language has a list of the languages Supertext offers:
+Supertext needs to know exactly which language variant each site language is: Swiss or German German, British or American English. Under **Plugins → Supertext Translation → Supertext language codes** every site language (the source language too) has a list of the languages Supertext offers, with the language's name in your admin language and its code:
 
-![The Languages section of the plugin settings: source language en; Supertext language codes with one list per site language: English (source language, sent as en), Deutsch → German (Switzerland) (de-CH), Français → French (Switzerland) (fr-CH)](images/plugin-languages.png)
+![The Languages section of the plugin settings: source language en; Supertext language codes with one list per site language: English → American English (en-US), noted as the default for en and as the source language sent as en; Deutsch → Swiss High German (de-CH); Français → Swiss French (fr-CH)](images/plugin-languages.png)
 
-- A Grav code that is exactly a Supertext code is chosen automatically: `de-ch` → `de-CH`, `es` → `es`, `nl` → `nl`.
-- A bare `de`, `en`, `fr`, `it` or `pt` has no automatic choice, because Supertext only offers them with a region. Choose the variant, e.g. `de` → *German (Switzerland) (de-CH)*. Until you do, the row says **Not mapped** and editors can't translate into that language (the panel shows it greyed out).
+- Each list is preselected: with your saved choice, else the Supertext code the Grav code is exactly (`de-ch` → `de-CH`, `es` → `es`, `nl` → `nl`), else the default below. A row on its default says *Default for …*; choose another variant if you mean one, e.g. `de` → *German (Switzerland) (de-CH)* for Swiss German (no "ß").
+- A language without a default shows **— choose —** and **Not mapped**; editors can't translate into it (the panel shows it greyed out, and translating gives *has no Supertext language yet*) until you choose one.
 - The source language uses the same list: a source mapped to `de-CH` is sent as `de`. A bare source code such as `en` needs no choice.
-- Save the settings after changing the list.
+- Save the settings after changing a list. Only rows you changed are stored; the others keep following the preselection. When saving, the plugin keeps only codes Supertext offers.
+
+Defaults (from the bundled Supertext SDK, used for every language you haven't chosen):
+
+| Grav code | Default Supertext code |
+| --- | --- |
+| `de`, `en`, `fr`, `it`, `pt` | `de-DE`, `en-US`, `fr-FR`, `it-IT`, `pt-PT` |
+| `zh`, `zh-cn`, `zh-sg` | `zh-Hans` |
+| `zh-tw`, `zh-hk`, `zh-mo` | `zh-Hant` |
+| `sr`, `sr-latn-rs` | `sr-Latn` (`sr-cyrl-rs` → `sr-Cyrl`) |
+| A region of a language Supertext has without region | that language: `es-es` → `es`, `nl-nl` → `nl`, `nb-no` → `nb` |
+| No default | `en-ie`, `de-li`, `fr-be`, `sr-rs`, `gsw`, `no`, …: choose one |
 
 The languages Supertext offers (October 2026):
 
@@ -112,7 +123,7 @@ The languages Supertext offers (October 2026):
 
 Supertext rejects other forms, e.g. `es-ES`, `sl-SI` or `zh-CN`. Formal and informal address (*Form of address*) exist for all of them except English, Romansh (`rm`), Albanian (`sq`), Serbian and Swiss German; those always get Supertext's default, and the language list says so next to them.
 
-In YAML, the setting is a map of Grav codes to Supertext codes:
+In YAML (for automated setups, or per environment in `user/<environment>/config/plugins/supertext-translation.yaml`, which Grav merges over the main file), the setting is a map of Grav codes to Supertext codes; an entry wins over the default, and the lists in the settings show it:
 
 ```yaml
 language_codes:
@@ -135,7 +146,7 @@ All settings are in **Plugins → Supertext Translation**:
 | API endpoint | `api_url` | `https://api.supertext.com/v1/` | Only change it if Supertext tells you to. |
 | Send version information to Supertext | `version_reports` | enabled | Sends the site URL and the versions of this plugin, Grav and PHP to Supertext when you save these settings and after an update, so Supertext support can see which version you run. No content, no API key and no personal data. See [Version information](#version-information-and-the-ping-address). The environment variable `SUPERTEXT_VERSION_REPORTS=0` turns it off (and `1` on) whatever the setting says. |
 | Source language | `source_language` | empty | Grav language code the translations are made from. Empty: the site's default language. |
-| Supertext language codes | `language_codes` | none | The Supertext language of each site language, e.g. `de` → `de-CH` (Swiss German, no "ß"), `fr` → `fr-CH`. A Grav code that is exactly a Supertext code (`es`, `nl`, `de-CH`) needs no entry; a bare `de`, `en`, `fr`, `it` or `pt` does. Without one, that language can't be translated. See [Supertext languages](#supertext-languages). |
+| Supertext language codes | `language_codes` | none (the preselection) | One list per site language: the Supertext language it is translated into and from, e.g. `de` → `de-CH` (Swiss German, no "ß"), `fr` → `fr-CH`. Preselected with the exact Supertext code or the default (`de` → `de-DE`, `en` → `en-US`, …). A language without a default (`en-ie`, `gsw`) can't be translated until you choose one. See [Supertext languages](#supertext-languages). |
 | Form of address | `politeness` | Supertext default | *Formal* (Sie, vous) or *Informal* (du, tu), for the languages Supertext offers both for. Languages without the choice (English, Romansh, Albanian, Serbian, Swiss German) always get Supertext's default. |
 | Front matter fields | `header_fields` | `title`, `menu`, `metadata.description` | Fields of the page header translated together with the content. Use dots for nested fields. Only text values are translated. |
 | Publish new translations | `publish_new_translations` | off | Off: new translations are created with `published: false` so editors can review them. On: they are published right away. Updating an existing translation never changes whether it is published. |
@@ -201,7 +212,7 @@ The panel, the settings and the plugin's messages are available in English, Germ
 | "Supertext rejected the API key" (API key check) | The key is wrong, incomplete or revoked: copy it again, or generate a new one at [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api) (requires the Admin role). The settings are saved anyway. |
 | "The API key couldn't be checked because Supertext can't be reached" | The server can't reach `api.supertext.com` (firewall, proxy, DNS) or Supertext is down. Press **Check again** later. |
 | "The API key couldn't be checked: Supertext answered with an error (…)" | Supertext answered unexpectedly, e.g. HTTP 429 (too many requests). Press **Check again** later. |
-| "Not mapped" next to a language, or "The language … has no Supertext language yet" | Choose the Supertext language for it under **Supertext language codes** and save (see [Supertext languages](#supertext-languages)). |
+| "Not mapped" next to a language, or "The language … has no Supertext language yet" | Supertext has no default for that Grav code (e.g. `en-ie`, `gsw`). Choose the Supertext language for it in its list under **Plugins → Supertext Translation → Supertext language codes** and save (see [Supertext languages](#supertext-languages)). |
 | "Supertext offers no formal or informal tone for this language" | The language is mapped to a code the plugin doesn't know, and Supertext refused the form of address for it. Set **Form of address** to *Supertext default*, or map the language to one of the listed codes. |
 | "No Supertext API key is configured" | Generate a key (see [API key](#api-key)) and enter it in the settings, or set `SUPERTEXT_API_KEY` for the web server process (not only for your shell). |
 | "Supertext does not translate from … into …" | Supertext doesn't offer that language pair, or a *Supertext language codes* entry in the YAML file is wrong (e.g. `german` or `es-ES` instead of `de-CH` or `es`). Choose the language from the list in the settings. |

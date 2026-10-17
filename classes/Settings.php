@@ -52,17 +52,8 @@ final class Settings
         }
 
         $codes = [];
-        foreach ((array)($config['language_codes'] ?? []) as $key => $value) {
-            // Accept both a map (de: de-CH) and a list of {grav, supertext} rows.
-            if (is_array($value)) {
-                $key = (string)($value['grav'] ?? '');
-                $value = (string)($value['supertext'] ?? '');
-            }
-            $key = strtolower(trim((string)$key));
-            $value = trim((string)$value);
-            if ($key !== '' && $value !== '') {
-                $codes[$key] = $value;
-            }
+        foreach (self::mappingRows($config['language_codes'] ?? []) as $key => $value) {
+            $codes[strtolower($key)] = $value;
         }
 
         $fields = array_values(array_filter(array_map(
@@ -90,9 +81,53 @@ final class Settings
     }
 
     /**
+     * The setting language_codes as it is saved (onAdminSave): a map { Grav code: Supertext code }
+     * with only codes Supertext offers, in their canonical form ("de_ch" → "de-CH"). Blank and
+     * unknown codes are dropped; the older list of {grav, supertext} rows becomes a map.
+     *
+     * @return array<string, string>
+     */
+    public static function sanitizeLanguageCodes(mixed $value): array
+    {
+        $codes = [];
+        foreach (self::mappingRows($value) as $grav => $supertext) {
+            $target = Languages::matchTarget($supertext);
+            if ($target !== null) {
+                $codes[$grav] = $target;
+            }
+        }
+
+        return $codes;
+    }
+
+    /**
+     * The non-blank rows of language_codes, from a map (de: de-CH) or a list of {grav, supertext} rows.
+     *
+     * @return array<string, string>
+     */
+    private static function mappingRows(mixed $value): array
+    {
+        $rows = [];
+        foreach (is_array($value) ? $value : [] as $key => $code) {
+            if (is_array($code)) {
+                $key = (string)($code['grav'] ?? '');
+                $code = (string)($code['supertext'] ?? '');
+            }
+            $key = trim((string)$key);
+            $code = is_scalar($code) ? trim((string)$code) : '';
+            if ($key !== '' && $code !== '') {
+                $rows[$key] = $code;
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
      * The target code sent to Supertext for a Grav language: the mapping (language_codes),
-     * else the Grav code if it is exactly a Supertext code ("de-ch" → "de-CH", "es" → "es").
-     * No guessing: a bare "de" has no Supertext code until an administrator maps it.
+     * else the Grav code if it is exactly a Supertext code ("de-ch" → "de-CH", "es" → "es"),
+     * else the SDK's default ("de" → "de-DE", "zh-tw" → "zh-Hant", "es-es" → "es").
+     * Nothing else is guessed: "en-ie", "de-li" or "gsw" need a mapping.
      *
      * @throws SdkException unsupported_language (nothing is sent)
      */
@@ -101,7 +136,7 @@ final class Settings
         return Languages::target($gravCode, $this->languageCodes);
     }
 
-    /** targetCode(), or null while the language isn't mapped (for the settings and the panel). */
+    /** targetCode(), or null for a language without mapping and default (for the settings and the panel). */
     public function targetCodeOrNull(string $gravCode): ?string
     {
         try {
