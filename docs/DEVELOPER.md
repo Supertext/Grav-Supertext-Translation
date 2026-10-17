@@ -199,18 +199,40 @@ The stand-in also answers the Commando Center's reports (`POST /api/v1/report`, 
 
 Also checked by hand (and by the screenshot script) in a real Grav 2.2.4 with Admin2: the panel loads, the editor account can translate, a save in Admin2 of an unchanged translation keeps it *current*, an edit makes it *edited*; the ping route answers without login; a save of the plugin settings in Admin2 reports `settings_saved` to the stand-in, refreshes the key check and doesn't write `supertext_status`; an unmapped language is refused with *has no Supertext language yet* while the others are translated.
 
-CI (`.github/workflows/ci.yml`) runs the tests on PHP 8.3 and 8.4, lints all PHP files, syntax-checks the panel and field scripts and runs PHPStan (see *Code quality and security checks*).
+CI (`.github/workflows/ci.yml`) runs the tests on PHP 8.3 and 8.4, lints all PHP files, syntax-checks the panel and field scripts and runs PHPStan (see *Code quality and security checks*). `.github/workflows/e2e.yml` runs the end-to-end test against the real Supertext API and regenerates the docs screenshots (see *End-to-end tests*).
+
+## End-to-end tests
+
+The unit tests use fakes. `.github/workflows/e2e.yml` also tests against the **real Supertext API**, so changes on Supertext's side (language codes, regional variants, formatting, rate limits) show up. It runs on every push to `main` that touches the plugin, the demo, the E2E test or the screenshot scripts, on pull requests that change the E2E test or workflow, every Monday (05:24 UTC), and by hand (*Actions → E2E → Run workflow*). Demo accounts are made up for each run (masked in the log).
+
+1. **Real API** (repository or organization secret `SUPERTEXT_API_KEY`; without it these steps are skipped with a warning). The demo image (`demo/Dockerfile`, Docker layer cache in GitHub Actions) starts with a fresh volume, which is a folder on the runner, so the test can read the page files (Grav has no database). Version reports are off (`SUPERTEXT_VERSION_REPORTS=0`), so CI runs don't appear in the Commando Center.
+   - `tests/e2e/features.mjs` asks the live `GET features` (cost-free, no plugin or SDK code) whether every pair the demo translates (`en` → `de-CH`, `fr-CH`) is offered; a missing pair fails the run. Whether the plugin's own language list matches the API is the SDK's job (its own tests).
+   - `tests/e2e/live.mjs` (Playwright): the demo editor logs in to Admin2, opens every English sample page and translates it into every other language with the Supertext panel (the real UI), then the page files are checked: each page has a `default.<lang>.md` per language, unpublished and stamped with the Supertext code; title, menu label, meta description and every text line of the body are filled and at least 80 % of them changed (a word like "Home" may stay the same); nothing of the HTML sent to Supertext is left (`data-st-id`, placeholders, tags); headings, list items, table rows and cells, quotes and alerts, bold, italics, links (with unchanged targets) and inline code are kept (counted); the text is in the target language (common words of each language counted) and de-CH has no "ß"; the panel shows no error or warning. Translating again must report *translation updated* and rewrite the same files (no new ones), still unpublished. Each run translates the two sample pages twice into two languages (around 5,000 characters on the key's account).
+2. **Stand-in API**: the docs screenshots with `scripts/docs-screenshots.sh` (see *Screenshots*), so the images don't change with each machine translation. If `docs/images/` changed, a second job (only on `main`) pushes the branch `automation/docs-screenshots` and opens (or updates) the pull request "Docs: regenerate screenshots". This needs *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests*.
+
+If a run fails, the artifact `e2e-debug` has the result pages of the panel, the demo's container log and Grav log, the demo's page files, and the stand-in and Grav logs of the screenshot run. Locally:
+
+```bash
+cd tests/e2e && npm install
+SUPERTEXT_API_KEY=… E2E_TARGETS=de-CH,fr-CH node features.mjs
+# a fresh demo with a real SUPERTEXT_API_KEY and its volume as a local folder, e.g.
+#   docker run -p 8081:8080 -v "$PWD/grav-data:/data" -e SUPERTEXT_API_KEY -e DEMO_EDITOR_EMAIL -e DEMO_EDITOR_PASSWORD …
+GRAV_URL=http://127.0.0.1:8081 PAGES_DIR="$PWD/grav-data/user/pages" \
+  EDITOR_EMAIL=… EDITOR_PASSWORD=… npm run live
+```
+
+`live.mjs` also passes against the stand-in API (it returns real translations of the sample pages), which is how to try changes to it without a key: build a site as `scripts/docs-screenshots.sh` does and point `PAGES_DIR` at its `data/user/pages`.
 
 ## Screenshots
 
 The guides' screenshots come from the demo and are regenerated with:
 
 ```bash
-pip install playwright && playwright install chromium   # once
+pip install -r scripts/requirements-screenshots.txt && playwright install chromium   # once
 composer docs:screenshots
 ```
 
-`scripts/docs-screenshots.sh` downloads Grav from its GitHub release (cached in `.cache/`, or in `CACHE_DIR`), builds a throwaway site with the demo's entrypoint (random local-only passwords), starts the stand-in API (which also takes the version reports, `SUPERTEXT_REPORT_URL`) and Grav, and runs `scripts/screenshots.py` (Playwright, 1280×820 at 1× scale, cropped). It fails if any sample text had no stand-in translation. Regenerate the images in the same commit whenever the UI they show changes; add new sample text to `scripts/stand-in-api/translations.php`.
+`scripts/docs-screenshots.sh` downloads Grav from its GitHub release (cached in `.cache/`, or in `CACHE_DIR`), builds a throwaway site with the demo's entrypoint (random local-only passwords), starts the stand-in API (which also takes the version reports, `SUPERTEXT_REPORT_URL`) and Grav, and runs `scripts/screenshots.py` (Playwright, 1280×820 at 1× scale, cropped). It fails if any sample text had no stand-in translation. Dates the admin shows (translation state, key check, page info) are frozen to 1 October 2026 and animations are off, and an image that differs from the one in `docs/images/` only by a shade at some edges (Chromium's rendering, with Pillow installed) is kept, so the images change only when the UI does. The E2E workflow runs the same script on every run (see *End-to-end tests*). Regenerate the images in the same commit whenever the UI they show changes; add new sample text to `scripts/stand-in-api/translations.php`.
 
 ## Demo
 
