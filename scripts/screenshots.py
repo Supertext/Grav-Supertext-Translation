@@ -1,5 +1,6 @@
 """Takes the documentation screenshots. Run through scripts/docs-screenshots.sh."""
 import asyncio
+import io
 import json
 import os
 import urllib.request
@@ -10,6 +11,31 @@ BASE = os.environ["BASE"]
 OUT = os.environ["OUT"]
 WIDTH, HEIGHT = 1280, 820
 PANEL_TAG = "grav-supertext-translation--panel"
+
+# Every date the admin shows (translation state, key check, page info) is formatted in the
+# browser from the server's timestamps. They are frozen here, so a new run only changes the
+# images when the UI changes, not because it ran on another day.
+FREEZE_DATES = """
+(() => {
+    const fixed = new Date('2026-10-01T09:00:00Z');
+    for (const name of ['toLocaleString', 'toLocaleDateString', 'toLocaleTimeString']) {
+        const original = Date.prototype[name];
+        Date.prototype[name] = function (...args) { return original.apply(fixed, args); };
+    }
+    const proto = Intl.DateTimeFormat.prototype;
+    const format = Object.getOwnPropertyDescriptor(proto, 'format');
+    Object.defineProperty(proto, 'format', { configurable: true, get() { const f = format.get.call(this); return () => f(fixed); } });
+    const formatToParts = proto.formatToParts;
+    proto.formatToParts = function () { return formatToParts.call(this, fixed); };
+})();
+"""
+
+
+async def new_page(browser):
+    page = await browser.new_page(viewport={"width": WIDTH, "height": HEIGHT}, device_scale_factor=1,
+                                  locale="en-US", timezone_id="UTC")
+    await page.add_init_script(FREEZE_DATES)
+    return page
 
 
 async def login(page, username, password):
@@ -22,9 +48,31 @@ async def login(page, username, password):
     await page.wait_for_timeout(1500)
 
 
+def same_image(path, png):
+    """True if the image at path looks the same as png: Chromium renders some edges a shade
+    differently from run to run, which must not count as a changed screenshot."""
+    if not os.path.exists(path):
+        return False
+    try:
+        from PIL import Image, ImageChops
+    except ImportError:  # Pillow is optional: without it every image is written
+        return False
+    with Image.open(path) as old, Image.open(io.BytesIO(png)) as new:
+        if old.size != new.size:
+            return False
+        extrema = ImageChops.difference(old.convert("RGBA"), new.convert("RGBA")).getextrema()
+        return max(high for _, high in extrema) <= 3
+
+
 async def shot(page, name, clip=None):
     path = os.path.join(OUT, name)
-    await page.screenshot(path=path, clip=clip)
+    # Animations off: the spinner and hover transitions would differ from run to run.
+    png = await page.screenshot(clip=clip, animations="disabled")
+    if same_image(path, png):
+        print("  " + name + " (unchanged)")
+        return
+    with open(path, "wb") as f:
+        f.write(png)
     print("  " + name)
 
 
@@ -90,7 +138,7 @@ async def main():
         browser = await p.chromium.launch()
 
         # ── Administrator: language setup and plugin settings ──────────────
-        admin = await browser.new_page(viewport={"width": WIDTH, "height": HEIGHT}, device_scale_factor=1)
+        admin = await new_page(browser)
         await login(admin, "admin", os.environ["ADMIN_PASSWORD"])
 
         await admin.goto(f"{BASE}/admin/config/system")
@@ -113,7 +161,7 @@ async def main():
         await shot(admin, "plugin-languages.png", {"x": 224, "y": 0, "width": WIDTH - 224, "height": 620})
 
         # ── Editor: translate a page ───────────────────────────────────────
-        editor = await browser.new_page(viewport={"width": WIDTH, "height": HEIGHT}, device_scale_factor=1)
+        editor = await new_page(browser)
         await login(editor, "editor", os.environ["EDITOR_PASSWORD"])
         await open_page(editor, "home")
         # Mark the Supertext button: it is an icon without text.
@@ -159,7 +207,7 @@ async def main():
         header = page["header"]
         header["published"] = True
         api("PATCH", "/pages/home?lang=de", t, {"header": header, "content": page["content"], "title": page["title"]})
-        visitor = await browser.new_page(viewport={"width": WIDTH, "height": HEIGHT}, device_scale_factor=1)
+        visitor = await new_page(browser)
         await visitor.goto(f"{BASE}/de")
         await visitor.wait_for_timeout(1500)
         await shot(visitor, "translated-site.png", {"x": 0, "y": 0, "width": WIDTH, "height": 700})
