@@ -133,6 +133,12 @@ form:
       title: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.SECTION_ADVANCED
       underline: true
 
+    review_url:
+      type: text
+      label: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.REVIEW_URL
+      default: 'https://localizationreview-production.up.railway.app/v1/'
+      help: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.REVIEW_URL_HELP
+
     poll_interval:
       type: number
       label: PLUGIN_SUPERTEXT_TRANSLATION.SETTINGS.POLL_INTERVAL

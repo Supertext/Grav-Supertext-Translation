@@ -240,4 +240,22 @@ final class PageTranslatorTest extends TestCase
         $change($page);
         $page->write($file);
     }
+
+    public function testLanguageWithTranslationReviewGoesThroughTheReviewService(): void
+    {
+        $settings = Settings::fromArray(['api_key' => 'k', 'language_codes' => ['de' => ['code' => 'de-CH', 'review' => true], 'fr' => 'fr-FR']]);
+        $client = SupertextClient::fromSettings($settings, 'Grav-Supertext-Translation/test', $this->api, static function (): void {});
+        $translator = new PageTranslator($client, $settings, static fn(): string => '2026-10-05T20:00:00Z');
+
+        $result = $translator->translate($this->folder, 'default', 'en', ['de', 'fr']);
+        self::assertSame('created', $result['de']['result']);
+        self::assertSame('created', $result['fr']['result']);
+        $hosts = [];
+        foreach ($this->api->requests as $request) {
+            $hosts[(string)parse_url($request['url'], PHP_URL_HOST)][] = $request['method'];
+        }
+        self::assertSame(['POST', 'GET', 'GET', 'DELETE'], $hosts['localizationreview-production.up.railway.app'], 'German: upload, status, download, delete at the review service');
+        self::assertSame(['POST', 'GET', 'GET', 'DELETE'], $hosts['api.supertext.com'], 'French: directly to Supertext');
+        self::assertStringContainsString('de-CH', (string)$this->api->requests[0]['body']);
+    }
 }

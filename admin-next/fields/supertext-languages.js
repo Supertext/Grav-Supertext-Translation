@@ -6,8 +6,12 @@
  * else the default (de → de-DE, zh-TW → zh-Hant, es-ES → es). Codes without a default (en-IE,
  * de-LI, gsw) show "— choose —" and "Not mapped" until the administrator chooses one.
  *
+ * Each target language also has a *Translation review* checkbox (off by default): translations
+ * into it then go through Supertext's review service (setting review_url).
+ *
  * Value: a map { grav code: Supertext code } of the rows the administrator chose; rows left on
- * their suggestion aren't stored (the plugin uses the same default on its own). Entries for
+ * their suggestion aren't stored (the plugin uses the same default on its own). A language with
+ * Translation review on is stored as { code: Supertext code or '', review: true }. Entries for
  * languages the site no longer has are kept. The server checks the codes when saving
  * (Settings::sanitizeLanguageCodes()).
  *
@@ -29,6 +33,9 @@ const EN = {
     LANG_NO_POLITENESS: 'Supertext offers no formal or informal form for this language: Supertext’s default is used.',
     LANG_OTHER: '{code} (not in the list)',
     LANG_UNAVAILABLE: 'Enable the plugin and reload this page to choose the languages.',
+    LANG_REVIEW: 'Translation review',
+    LANG_REVIEW_HELP: 'Translations into this language go through Supertext’s review service, so reviewers can check and correct them on the website with the Supertext Localization Review extension. Their corrections are used the next time the page is translated.',
+    LANG_REVIEW_OFF: 'Translation review is off for every language: the Review service setting is empty.',
 };
 
 function t(key, params) {
@@ -66,10 +73,21 @@ function toMap(value) {
     if (Array.isArray(value)) {
         value.forEach((row) => { if (row && row.grav && row.supertext) map[String(row.grav)] = String(row.supertext); });
     } else if (value && typeof value === 'object') {
-        Object.entries(value).forEach(([k, v]) => { if (typeof v === 'string' && v.trim() !== '') map[k] = v.trim(); });
+        Object.entries(value).forEach(([k, v]) => {
+            if (typeof v === 'string' && v.trim() !== '') {
+                map[k] = v.trim();
+            } else if (v && typeof v === 'object' && (v.review === true || v.review === 'true' || v.review === 1 || v.review === '1')) {
+                map[k] = { code: typeof v.code === 'string' ? v.code.trim() : '', review: true };
+            } else if (v && typeof v === 'object' && typeof v.code === 'string' && v.code.trim() !== '') {
+                map[k] = v.code.trim();
+            }
+        });
     }
     return map;
 }
+
+/** An entry's Supertext code ('' while it follows the suggestion). */
+const codeOf = (entry) => (entry && typeof entry === 'object' ? entry.code || '' : entry || '');
 
 class SupertextLanguagesField extends HTMLElement {
     constructor() {
@@ -123,16 +141,27 @@ class SupertextLanguagesField extends HTMLElement {
         this._render();
     }
 
-    /** The administrator's choice for a Grav code, if any. */
-    _mapped(code) {
+    _entry(code) {
         const found = Object.keys(this._map).find((k) => key(k) === key(code));
         return found !== undefined ? this._map[found] : null;
     }
 
-    _set(code, supertext) {
+    /** The administrator's choice for a Grav code, if any. */
+    _mapped(code) {
+        return codeOf(this._entry(code)) || null;
+    }
+
+    /** Whether Translation review is on for a Grav code. */
+    _review(code) {
+        const entry = this._entry(code);
+        return !!(entry && typeof entry === 'object' && entry.review);
+    }
+
+    _set(code, supertext, review) {
         const map = {};
         Object.entries(this._map).forEach(([k, v]) => { if (key(k) !== key(code)) map[k] = v; });
-        if (supertext) map[code] = supertext;
+        if (review) map[code] = { code: supertext || '', review: true };
+        else if (supertext) map[code] = supertext;
         this._map = map;
         this.dispatchEvent(new CustomEvent('change', { detail: { ...map }, bubbles: true }));
         this._render();
@@ -180,13 +209,24 @@ class SupertextLanguagesField extends HTMLElement {
                 } else if (d.politeness && d.politeness !== 'default' && known && known.politeness === false) {
                     notes += `<div class="stl-note stl-info">${esc(t('LANG_NO_POLITENESS'))}</div>`;
                 }
+                // Translation review: only for languages translated into (not the source language).
+                const review = lang.is_source ? '' : `<label class="stl-review" title="${esc(t('LANG_REVIEW_HELP'))}">
+                        <input type="checkbox" data-review="${esc(lang.code)}" ${this._review(lang.code) ? 'checked' : ''} ${d.review_available === false ? 'disabled' : ''}>
+                        <span>${esc(t('LANG_REVIEW'))}</span>
+                    </label>`;
                 body += `<li class="stl-row">
                     <label class="stl-lang" for="stl-${esc(lang.code)}">${esc(lang.name)} <span class="stl-code">${esc(lang.code)}</span></label>
                     <select id="stl-${esc(lang.code)}" data-code="${esc(lang.code)}" class="${selected || sourceCode ? '' : 'stl-missing'}">${options}</select>
                     ${notes}
+                    ${review}
                 </li>`;
             }
             body += '</ul>';
+            if ((d.languages || []).some((l) => !l.is_source)) {
+                body += d.review_available === false
+                    ? `<div class="stl-note stl-review-help">${esc(t('LANG_REVIEW_OFF'))}</div>`
+                    : `<div class="stl-note stl-review-help">${esc(t('LANG_REVIEW'))}: ${esc(t('LANG_REVIEW_HELP'))}</div>`;
+            }
         }
 
         this.innerHTML = `
@@ -202,12 +242,18 @@ class SupertextLanguagesField extends HTMLElement {
                 ${TAG} .stl-note { grid-column: 2; font-size: 12px; color: var(--muted-foreground, #6b7280); }
                 ${TAG} .stl-warn { color: #b45309; }
                 ${TAG} .stl-info { color: #1d4ed8; }
+                ${TAG} .stl-review { grid-column: 2; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+                ${TAG} .stl-review input { margin: 0; }
+                ${TAG} .stl-review-help { margin-top: 8px; max-width: 560px; }
                 ${TAG} .stl-box { border-radius: 8px; padding: 10px 12px; border: 1px solid currentColor; background: color-mix(in srgb, currentColor 7%, transparent); }
             </style>
             ${body}`;
 
         this.querySelectorAll('select[data-code]').forEach((select) => {
-            select.addEventListener('change', () => this._set(select.dataset.code, select.value));
+            select.addEventListener('change', () => this._set(select.dataset.code, select.value, this._review(select.dataset.code)));
+        });
+        this.querySelectorAll('input[data-review]').forEach((box) => {
+            box.addEventListener('change', () => this._set(box.dataset.review, this._mapped(box.dataset.review), box.checked));
         });
     }
 }

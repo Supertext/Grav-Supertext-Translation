@@ -7,7 +7,7 @@ This guide is for administrators of a Grav site. It covers installing the plugin
 - Grav **2.0 or later** (tested with Grav 2.2.4)
 - The **Admin2** and **API** plugins (bundled with the "Grav + Admin" download; Admin2 ≥ 2.1, API ≥ 1.0.44)
 - PHP 8.3 or later with the `curl`, `dom` and `mbstring` extensions (all standard)
-- Outgoing HTTPS from the web server to `api.supertext.com`
+- Outgoing HTTPS from the web server to `api.supertext.com` (and, for [Translation review](#translation-review), to Supertext's review service, `localizationreview-production.up.railway.app`)
 - A Supertext account with an API key for AI translation (see [API key](#api-key))
 - At least two site languages (see [Language setup](#language-setup))
 
@@ -89,11 +89,12 @@ Grav's own theme has no language menu; visitors reach the languages under `/de/`
 
 Supertext needs to know exactly which language variant each site language is: Swiss or German German, British or American English. Under **Plugins → Supertext Translation → Supertext language codes** every site language (the source language too) has a list of the languages Supertext offers, with the language's name in your admin language and its code:
 
-![The Languages section of the plugin settings: source language en; Supertext language codes with one list per site language: English → American English (en-US), noted as the default for en and as the source language sent as en; Deutsch → Swiss High German (de-CH); Français → Swiss French (fr-CH)](images/plugin-languages.png)
+![The Languages section of the plugin settings: source language en; Supertext language codes with one list per site language: English → American English (en-US), noted as the default for en and as the source language sent as en; Deutsch → Swiss High German (de-CH); Français → Swiss French (fr-CH); a Translation review checkbox under the German and French lists, not ticked](images/plugin-languages.png)
 
 - Each list is preselected: with your saved choice, else the Supertext code the Grav code is exactly (`de-ch` → `de-CH`, `es` → `es`, `nl` → `nl`), else the default below. A row on its default says *Default for …*; choose another variant if you mean one, e.g. `de` → *German (Switzerland) (de-CH)* for Swiss German (no "ß").
 - A language without a default shows **— choose —** and **Not mapped**; editors can't translate into it (the panel shows it greyed out, and translating gives *has no Supertext language yet*) until you choose one.
 - The source language uses the same list: a source mapped to `de-CH` is sent as `de`. A bare source code such as `en` needs no choice.
+- **Translation review**: a checkbox under each language's list (not for the source language), off by default. See [Translation review](#translation-review).
 - Save the settings after changing a list. Only rows you changed are stored; the others keep following the preselection. When saving, the plugin keeps only codes Supertext offers.
 
 Defaults (from the bundled Supertext SDK, used for every language you haven't chosen):
@@ -132,6 +133,14 @@ language_codes:
   en: en-GB
 ```
 
+A language with *Translation review* on is written with its code and `review: true` (`code: ''` keeps the preselection):
+
+```yaml
+language_codes:
+  de: { code: de-CH, review: true }
+  it: { code: '', review: true }
+```
+
 ## Settings
 
 All settings are in **Plugins → Supertext Translation**:
@@ -147,11 +156,13 @@ All settings are in **Plugins → Supertext Translation**:
 | Send version information to Supertext | `version_reports` | enabled | Sends the site URL and the versions of this plugin, Grav and PHP to Supertext when you save these settings and after an update, so Supertext support can see which version you run. No content, no API key and no personal data. See [Version information](#version-information-and-the-ping-address). The environment variable `SUPERTEXT_VERSION_REPORTS=0` turns it off (and `1` on) whatever the setting says. |
 | Source language | `source_language` | empty | Grav language code the translations are made from. Empty: the site's default language. |
 | Supertext language codes | `language_codes` | none (the preselection) | One list per site language: the Supertext language it is translated into and from, e.g. `de` → `de-CH` (Swiss German, no "ß"), `fr` → `fr-CH`. Preselected with the exact Supertext code or the default (`de` → `de-DE`, `en` → `en-US`, …). A language without a default (`en-ie`, `gsw`) can't be translated until you choose one. See [Supertext languages](#supertext-languages). |
+| Translation review (per language, under its list) | `language_codes.<code>.review` | off | Translations into this language go through Supertext's review service. See [Translation review](#translation-review). |
 | Form of address | `politeness` | Supertext default | *Formal* (Sie, vous) or *Informal* (du, tu), for the languages Supertext offers both for. Languages without the choice (English, Romansh, Albanian, Serbian, Swiss German) always get Supertext's default. |
 | Front matter fields | `header_fields` | `title`, `menu`, `metadata.description` | Fields of the page header translated together with the content. Use dots for nested fields. Only text values are translated. |
 | Publish new translations | `publish_new_translations` | off | Off: new translations are created with `published: false` so editors can review them. On: they are published right away. Updating an existing translation never changes whether it is published. |
 | Status check interval | `poll_interval` | 2 | Seconds between checks while Supertext translates. |
 | Maximum wait | `poll_timeout` | 300 | Seconds to wait for Supertext before giving up. Your web server and PHP must allow requests this long (`max_execution_time`, proxy timeouts). |
+| Review service | `review_url` | Supertext's review service (`https://localizationreview-production.up.railway.app/v1/`) | Address of the review service for languages with *Translation review* on. Empty turns review off for every language. Only change it if Supertext gives you another address. The environment variable `SUPERTEXT_REVIEW_URL` (if not empty) wins over the setting. |
 
 Example `user/config/plugins/supertext-translation.yaml`:
 
@@ -167,6 +178,20 @@ header_fields: [title, menu, metadata.description]
 publish_new_translations: false
 version_reports: true  # or SUPERTEXT_VERSION_REPORTS=0 to turn it off
 ```
+
+## Translation review
+
+With **Translation review**, people check the translations on the website itself and correct them there: customers or Supertext linguists open the original and the translated page side by side in Chrome with the *Supertext Localization Review* extension and fix texts in a side panel. Their corrections come back into Grav.
+
+Turn it on per language that is translated **into**: **Plugins → Supertext Translation → Supertext language codes** → tick **Translation review** under that language's list (e.g. *Deutsch*) → **Save**. Untick it to turn it off again; nothing else changes.
+
+- Translations into that language then go through Supertext's review service instead of directly to Supertext. It answers exactly like Supertext and passes everything on with your API key, so billing, languages, form of address and error messages stay the same. The other languages keep going directly to Supertext.
+- The review service keeps every translation of your account. A text it has translated before gets the same translation again (without a new Supertext call), and once a reviewer has corrected it, the corrected text.
+- **Corrections arrive with the next translation:** after a review, translate the pages into that language again (*Supertext* panel → *Translate*) to write the corrections into Grav. As always, a translation an editor has changed since is only replaced after confirmation.
+- Reviewers get a review link for your site from Supertext; nothing to set up in Grav.
+- The review service works with keys of the **live** Supertext API. If you point *API endpoint* (or `SUPERTEXT_API_URL`) at another Supertext environment, leave review off.
+- *Export for translation* and *Import translation* don't use the review service. The automatic API key check (and *Check again*) still goes directly to Supertext, and so do the version reports.
+- *Review service* (`review_url`) empty turns review off for every language; the checkboxes are then disabled.
 
 ## Version information and the ping address
 
@@ -218,6 +243,8 @@ The panel, the settings and the plugin's messages are available in English, Germ
 | "Supertext offers no formal or informal tone for this language" | The language is mapped to a code the plugin doesn't know, and Supertext refused the form of address for it. Set **Form of address** to *Supertext default*, or map the language to one of the listed codes. |
 | "No Supertext API key is configured" | Generate a key (see [API key](#api-key)) and enter it in the settings, or set `SUPERTEXT_API_KEY` for the web server process (not only for your shell). |
 | "Supertext does not translate from … into …" | Supertext doesn't offer that language pair, or a *Supertext language codes* entry in the YAML file is wrong (e.g. `german` or `es-ES` instead of `de-CH` or `es`). Choose the language from the list in the settings. |
+| "Supertext refused the API key" only for languages with *Translation review* | The review service only works with keys of the live Supertext API: with another *API endpoint* leave review off. |
+| Reviewers' corrections don't show up in Grav | They arrive with the next translation: translate the pages into that language again. Check that the language's *Translation review* is ticked and saved. |
 | "Supertext refused the API key" | Wrong or revoked key. Copy it again, or generate a new one, at [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api) (requires the Admin role). |
 | "This site has only one language" | Add languages under **Configuration → System → Languages**. |
 | Translations stop after about 30–60 seconds | A proxy or PHP limit ends the request first. Raise `max_execution_time` and the proxy/web-server timeout above *Maximum wait*. |

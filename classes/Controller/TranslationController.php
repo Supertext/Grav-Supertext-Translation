@@ -24,7 +24,6 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use Supertext\GravTranslation\Sdk\Files\TranslationFileError;
-use Supertext\GravTranslation\Sdk\V1\Client;
 use Supertext\GravTranslation\Sdk\V1\Languages;
 
 /**
@@ -361,19 +360,14 @@ final class TranslationController extends AbstractApiController
     private function translator(Settings $settings, ServerRequestInterface $request): PageTranslator
     {
         try {
-            $sdk = new Client(
-                $settings->apiKey,
-                baseUrl: $settings->apiUrl,
-                pollInterval: (float)$settings->pollInterval,
-                timeout: (float)$settings->pollTimeout,
-                userAgent: 'Grav-Supertext-Translation/' . PluginVersion::get(),
-            );
+            // Languages with Translation review on go through Supertext's review service (review_url).
+            $client = SupertextClient::fromSettings($settings, 'Grav-Supertext-Translation/' . PluginVersion::get());
         } catch (\LogicException) {
             // The SDK's built-in transport needs ext-curl.
             throw new ValidationException($this->messages($request)->reason('no_curl', [], '', 'The PHP curl extension is required to reach Supertext.'));
         }
 
-        return new PageTranslator(new SupertextClient($sdk), $settings);
+        return new PageTranslator($client, $settings);
     }
 
     private function languageName(string $code): string

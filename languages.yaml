@@ -22,6 +22,8 @@ en:
       API_KEY_DESCRIPTION: No Supertext account yet? <a href="https://www.supertext.com/person/en/account/signin" target="_blank" rel="noopener noreferrer">Create one at supertext.com</a>. Generate your API key at <a href="https://www.supertext.com/en/integrations/api" target="_blank" rel="noopener noreferrer">supertext.com → Integrations → API</a> (requires the Admin role).
       API_URL: API endpoint
       API_URL_HELP: Only change this if Supertext gives you a different endpoint.
+      REVIEW_URL: Review service
+      REVIEW_URL_HELP: 'Address of Supertext’s review service for languages with Translation review on. Leave it empty to turn review off for every language. Only change it if Supertext gives you a different address.'
       KEY_CHECK: 'API key check'
       VERSION_REPORTS: 'Send version information to Supertext'
       VERSION_REPORTS_HELP: 'Sends the site URL and the versions of this plugin, the CMS and the runtime to Supertext when you save these settings and after an update, so Supertext support can see which version you run. No content, no API key and no personal data are sent.'
@@ -167,6 +169,9 @@ en:
         LANG_NO_POLITENESS: 'Supertext offers no formal or informal form for this language: Supertext’s default is used.'
         LANG_OTHER: '{code} (not in the list)'
         LANG_UNAVAILABLE: 'Enable the plugin and reload this page to choose the languages.'
+        LANG_REVIEW: Translation review
+        LANG_REVIEW_HELP: 'Translations into this language go through Supertext’s review service, so reviewers can check and correct them on the website with the Supertext Localization Review extension. Their corrections are used the next time the page is translated.'
+        LANG_REVIEW_OFF: 'Translation review is off for every language: the Review service setting is empty.'
 de:
   PLUGIN_SUPERTEXT_TRANSLATION:
     PANEL_LABEL: Supertext-Übersetzung
@@ -180,6 +185,8 @@ de:
       API_KEY_DESCRIPTION: Noch kein Supertext-Konto? <a href="https://www.supertext.com/person/en/account/signin" target="_blank" rel="noopener noreferrer">Erstellen Sie eines auf supertext.com</a>. Ihren API-Schlüssel erzeugen Sie unter <a href="https://www.supertext.com/en/integrations/api" target="_blank" rel="noopener noreferrer">supertext.com → Integrations → API</a> (erfordert die Admin-Rolle).
       API_URL: API-Endpunkt
       API_URL_HELP: Nur ändern, wenn Supertext Ihnen einen anderen Endpunkt nennt.
+      REVIEW_URL: Prüfdienst
+      REVIEW_URL_HELP: 'Adresse des Prüfdienstes von Supertext für Sprachen mit Übersetzungsprüfung. Leer lassen, um die Prüfung für alle Sprachen auszuschalten. Nur ändern, wenn Supertext Ihnen eine andere Adresse nennt.'
       KEY_CHECK: 'Prüfung des API-Schlüssels'
       VERSION_REPORTS: 'Versionsinformationen an Supertext senden'
       VERSION_REPORTS_HELP: 'Sendet die URL der Website sowie die Versionen dieses Plugins, des CMS und der Laufzeitumgebung an Supertext, wenn Sie diese Einstellungen speichern und nach einem Update. So sieht der Supertext-Support, welche Version Sie einsetzen. Es werden keine Inhalte, kein API-Schlüssel und keine Personendaten übertragen.'
@@ -325,6 +332,9 @@ de:
         LANG_NO_POLITENESS: 'Supertext bietet für diese Sprache keine formelle oder informelle Anrede an: Es gilt die Standard-Anrede von Supertext.'
         LANG_OTHER: '{code} (nicht in der Liste)'
         LANG_UNAVAILABLE: 'Aktivieren Sie das Plugin und laden Sie diese Seite neu, um die Sprachen zu wählen.'
+        LANG_REVIEW: Übersetzungsprüfung
+        LANG_REVIEW_HELP: 'Übersetzungen in diese Sprache laufen über den Prüfdienst von Supertext, damit Prüferinnen und Prüfer sie mit der Erweiterung Supertext Localization Review direkt auf der Website kontrollieren und korrigieren können. Ihre Korrekturen werden beim nächsten Übersetzen der Seite übernommen.'
+        LANG_REVIEW_OFF: 'Die Übersetzungsprüfung ist für alle Sprachen ausgeschaltet: Die Einstellung Prüfdienst ist leer.'
 fr:
   PLUGIN_SUPERTEXT_TRANSLATION:
     PANEL_LABEL: Traduction Supertext
@@ -338,6 +348,8 @@ fr:
       API_KEY_DESCRIPTION: Pas encore de compte Supertext ? <a href="https://www.supertext.com/person/en/account/signin" target="_blank" rel="noopener noreferrer">Créez-en un sur supertext.com</a>. Générez votre clé API sur <a href="https://www.supertext.com/en/integrations/api" target="_blank" rel="noopener noreferrer">supertext.com → Integrations → API</a> (rôle Admin requis).
       API_URL: Point d’accès de l’API
       API_URL_HELP: Ne modifiez cette valeur que si Supertext vous indique un autre point d’accès.
+      REVIEW_URL: Service de révision
+      REVIEW_URL_HELP: 'Adresse du service de révision de Supertext pour les langues avec la révision des traductions. Laissez ce champ vide pour désactiver la révision pour toutes les langues. Ne modifiez cette valeur que si Supertext vous indique une autre adresse.'
       KEY_CHECK: 'Vérification de la clé API'
       VERSION_REPORTS: 'Envoyer les informations de version à Supertext'
       VERSION_REPORTS_HELP: 'Envoie à Supertext l’URL du site ainsi que les versions de ce plugin, du CMS et de l’environnement d’exécution lorsque vous enregistrez ces paramètres et après une mise à jour. Le support Supertext voit ainsi quelle version vous utilisez. Aucun contenu, aucune clé API et aucune donnée personnelle ne sont transmis.'
@@ -483,6 +495,9 @@ fr:
         LANG_NO_POLITENESS: 'Supertext ne propose pas de forme formelle ou informelle pour cette langue : la valeur par défaut de Supertext est utilisée.'
         LANG_OTHER: '{code} (absent de la liste)'
         LANG_UNAVAILABLE: 'Activez le plugin et rechargez cette page pour choisir les langues.'
+        LANG_REVIEW: Révision des traductions
+        LANG_REVIEW_HELP: 'Les traductions vers cette langue passent par le service de révision de Supertext, afin que les réviseurs puissent les vérifier et les corriger directement sur le site avec l’extension Supertext Localization Review. Leurs corrections sont reprises lors de la prochaine traduction de la page.'
+        LANG_REVIEW_OFF: 'La révision des traductions est désactivée pour toutes les langues : le paramètre Service de révision est vide.'
 it:
   PLUGIN_SUPERTEXT_TRANSLATION:
     PANEL_LABEL: Traduzione Supertext
@@ -496,6 +511,8 @@ it:
       API_KEY_DESCRIPTION: Non ha ancora un account Supertext? <a href="https://www.supertext.com/person/en/account/signin" target="_blank" rel="noopener noreferrer">Ne crei uno su supertext.com</a>. Generi la Sua chiave API su <a href="https://www.supertext.com/en/integrations/api" target="_blank" rel="noopener noreferrer">supertext.com → Integrations → API</a> (richiede il ruolo Admin).
       API_URL: Endpoint API
       API_URL_HELP: Lo modifichi solo se Supertext Le indica un endpoint diverso.
+      REVIEW_URL: Servizio di revisione
+      REVIEW_URL_HELP: 'Indirizzo del servizio di revisione di Supertext per le lingue con la revisione delle traduzioni. Lo lasci vuoto per disattivare la revisione per tutte le lingue. Lo modifichi solo se Supertext Le indica un indirizzo diverso.'
       KEY_CHECK: 'Verifica della chiave API'
       VERSION_REPORTS: 'Inviare le informazioni sulla versione a Supertext'
       VERSION_REPORTS_HELP: 'Invia a Supertext l’URL del sito e le versioni di questo plugin, del CMS e dell’ambiente di esecuzione quando salva queste impostazioni e dopo un aggiornamento. In questo modo l’assistenza Supertext vede quale versione utilizza. Non vengono trasmessi contenuti, chiavi API né dati personali.'
@@ -641,3 +658,6 @@ it:
         LANG_NO_POLITENESS: 'Supertext non offre una forma di cortesia o informale per questa lingua: viene usata l’impostazione predefinita di Supertext.'
         LANG_OTHER: '{code} (non nell’elenco)'
         LANG_UNAVAILABLE: 'Attivi il plugin e ricarichi questa pagina per scegliere le lingue.'
+        LANG_REVIEW: Revisione delle traduzioni
+        LANG_REVIEW_HELP: 'Le traduzioni in questa lingua passano dal servizio di revisione di Supertext, così i revisori possono controllarle e correggerle direttamente sul sito con l’estensione Supertext Localization Review. Le loro correzioni vengono riprese alla prossima traduzione della pagina.'
+        LANG_REVIEW_OFF: 'La revisione delle traduzioni è disattivata per tutte le lingue: l’impostazione Servizio di revisione è vuota.'

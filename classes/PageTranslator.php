@@ -129,6 +129,8 @@ final class PageTranslator
                 'target' => $target,
                 'source' => $sourceCode,
                 'politeness' => $this->settings->politenessFor($target),
+                // Translation review on for this language: through Supertext's review service.
+                'review' => $this->settings->reviewFor($lang),
             ];
         }
 

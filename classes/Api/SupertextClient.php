@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Grav\Plugin\SupertextTranslation\Api;
 
+use Grav\Plugin\SupertextTranslation\Settings;
+use Supertext\GravTranslation\Sdk\Http\HttpTransport;
 use Supertext\GravTranslation\Sdk\V1\Client;
 use Supertext\GravTranslation\Sdk\V1\Protocol;
 use Supertext\GravTranslation\Sdk\V1\SupertextException as SdkException;
@@ -19,6 +21,9 @@ use Supertext\GravTranslation\Sdk\V1\SupertextException as SdkException;
  *   about as long as one. One failing language doesn't stop the others.
  * - Errors as the plugin's SupertextException with a reason, so the admin shows them in
  *   the user's language (languages.yaml → PLUGIN_SUPERTEXT_TRANSLATION.ERRORS).
+ * - Translation review: jobs for languages with *Translation review* on go to Supertext's
+ *   review service (a second SDK client, same key and settings, base URL review_url); each
+ *   job is collected and deleted with the client that submitted it.
  */
 final class SupertextClient
 {
@@ -43,8 +48,65 @@ final class SupertextClient
         SdkException::INCOMPLETE_RESPONSE => ['empty', 'Supertext returned an empty translation.'],
     ];
 
-    public function __construct(private readonly Client $client)
+    /**
+     * Supertext's review service (translation proxy of Supertext Localization Review). It speaks
+     * the same API and forwards to the live Supertext API, keeping every translation so reviewers
+     * can correct them on the website. Used for languages with *Translation review* on.
+     */
+    public const REVIEW_URL = 'https://localizationreview-production.up.railway.app/v1/';
+
+    private ?Client $reviewClient = null;
+
+    /**
+     * @param \Closure(): Client|null $makeReviewClient builds the client for the review service (null: none)
+     */
+    public function __construct(
+        private readonly Client $client,
+        private readonly ?\Closure $makeReviewClient = null,
+    ) {
+    }
+
+    /**
+     * The client for the settings: the API at api_url and, unless review_url is empty or the
+     * same URL, the review service with the same key, timeouts, transport and User-Agent.
+     *
+     * @param callable(float): void|null $sleep (tests)
+     * @throws \LogicException without ext-curl and without a transport (the SDK's built-in transport needs it)
+     */
+    public static function fromSettings(Settings $settings, string $userAgent, ?HttpTransport $transport = null, ?callable $sleep = null): self
     {
+        $make = static fn(string $baseUrl): Client => new Client(
+            $settings->apiKey,
+            baseUrl: $baseUrl,
+            pollInterval: (float)$settings->pollInterval,
+            timeout: (float)$settings->pollTimeout,
+            userAgent: $userAgent,
+            transport: $transport,
+            sleep: $sleep,
+        );
+        $client = $make($settings->apiUrl);
+        $reviewUrl = trim($settings->reviewUrl);
+        $review = $reviewUrl === '' || rtrim($reviewUrl, '/') === rtrim(trim($settings->apiUrl), '/')
+            ? null
+            : static fn(): Client => $make($reviewUrl);
+
+        return new self($client, $review);
+    }
+
+    /** Whether review jobs go to a separate review service (false: everything goes directly). */
+    public function hasReviewService(): bool
+    {
+        return $this->makeReviewClient !== null;
+    }
+
+    /** The SDK client for a job: the review service when its language has review on, else the API. */
+    private function clientFor(bool $review): Client
+    {
+        if (!$review || $this->makeReviewClient === null) {
+            return $this->client;
+        }
+
+        return $this->reviewClient ??= ($this->makeReviewClient)();
     }
 
     /** Cost-free check of the API key. */
@@ -60,13 +122,15 @@ final class SupertextClient
     /**
      * Translates documents, typically one page into several languages.
      *
-     * @param array<string, array{html: string, target: string, source?: string, politeness?: string}> $jobs keyed by your own id
+     * @param array<string, array{html: string, target: string, source?: string, politeness?: string, review?: bool}> $jobs keyed by your own id;
+     *   review: through Supertext's review service
      * @return array<string, string|SupertextException> translated HTML, or the error for that job, in the order of $jobs
      */
     public function translateMany(array $jobs): array
     {
         $results = [];
         $files = [];
+        $clients = []; // the client that submitted each file collects and deletes it
         $stop = null; // an error that is the same for every language (no key, key refused)
         try {
             foreach ($jobs as $key => $job) {
@@ -79,7 +143,8 @@ final class SupertextClient
                     continue;
                 }
                 try {
-                    $files[$key] = $this->client->submit($job['html'], $job['target'], $job['source'] ?? '', $job['politeness'] ?? 'default');
+                    $clients[$key] = $this->clientFor((bool)($job['review'] ?? false));
+                    $files[$key] = $clients[$key]->submit($job['html'], $job['target'], $job['source'] ?? '', $job['politeness'] ?? 'default');
                 } catch (SdkException $e) {
                     $results[$key] = self::fromSdk($e);
                     if ($e->errorCode === SdkException::MISSING_API_KEY || $e->errorCode === SdkException::AUTHENTICATION_FAILURE) {
@@ -89,18 +154,18 @@ final class SupertextClient
             }
             foreach ($files as $key => $fileId) {
                 try {
-                    $this->client->waitUntilDone($fileId);
-                    $results[$key] = $this->client->download($fileId);
+                    $clients[$key]->waitUntilDone($fileId);
+                    $results[$key] = $clients[$key]->download($fileId);
                 } catch (SdkException $e) {
                     $results[$key] = self::fromSdk($e);
                 } finally {
-                    $this->client->delete($fileId);
+                    $clients[$key]->delete($fileId);
                     unset($files[$key]);
                 }
             }
         } finally {
-            foreach ($files as $fileId) {
-                $this->client->delete($fileId); // never throws
+            foreach ($files as $key => $fileId) {
+                $clients[$key]->delete($fileId); // never throws
             }
         }
 

@@ -76,6 +76,8 @@ final class SettingsController extends AbstractApiController
                 'target' => $target,
                 'source_code' => $code === $source ? $settings->sourceCodeOrNull($code) : null,
                 'politeness_supported' => $target !== null ? Languages::supportsPoliteness($target) : null,
+                // Translation review on for translations into this language (stored in language_codes).
+                'review' => in_array(strtolower($code), $settings->reviewLanguages, true),
             ];
         }
 
@@ -85,6 +87,8 @@ final class SettingsController extends AbstractApiController
             'languages' => $languages,
             'targets' => Languages::targetOptions(),
             'politeness' => $settings->politeness,
+            // review_url is empty: the checkboxes have no effect (review is off for every language).
+            'review_available' => $settings->reviewUrl !== '',
             'api_key_configured' => $settings->apiKey !== '',
             'key_check' => $check === null ? null : [
                 'status' => $check->status,

@@ -6,6 +6,7 @@ namespace Grav\Plugin\SupertextTranslation\Tests;
 
 use Grav\Plugin\SupertextTranslation\Api\SupertextClient;
 use Grav\Plugin\SupertextTranslation\Api\SupertextException;
+use Grav\Plugin\SupertextTranslation\Settings;
 use PHPUnit\Framework\TestCase;
 use Supertext\GravTranslation\Sdk\V1\Client;
 use Supertext\GravTranslation\Sdk\V1\Protocol;
@@ -161,5 +162,74 @@ final class SupertextClientTest extends TestCase
         foreach ($codes as $code) {
             self::assertNotSame('', SupertextClient::fromSdk(new SdkException($code))->reason, $code);
         }
+    }
+
+    private const REVIEW_HOST = 'localizationreview-production.up.railway.app';
+
+    /** @return list<string> "host METHOD path" of every request */
+    private static function calls(FakeSupertext $api): array
+    {
+        return array_map(static fn(array $r): string => parse_url($r['url'], PHP_URL_HOST) . ' ' . $r['method'] . ' ' . parse_url($r['url'], PHP_URL_PATH), $api->requests);
+    }
+
+    public function testReviewLanguagesGoThroughTheReviewServiceAndTheOthersDirectly(): void
+    {
+        $api = new FakeSupertext();
+        $client = SupertextClient::fromSettings(new Settings(apiKey: 'secret', pollTimeout: 60), 'Grav-Supertext-Translation/1.2.3', $api, static function (): void {});
+        self::assertTrue($client->hasReviewService());
+        $result = $client->translateMany([
+            'de' => ['html' => '<div data-st-id="0">Hello</div>', 'target' => 'de-CH', 'source' => 'en', 'review' => true],
+            'fr' => ['html' => '<div data-st-id="0">Hello</div>', 'target' => 'fr-CH', 'source' => 'en'],
+        ]);
+        self::assertStringContainsString('HELLO', (string)$result['de']);
+        self::assertStringContainsString('HELLO', (string)$result['fr']);
+        $calls = self::calls($api);
+        // All four calls of the review language go to the review service, with the same key and User-Agent.
+        foreach (['POST /v1/translate/ai/file', 'GET /v1/translate/ai/file/file-1/status', 'GET /v1/translate/ai/file/file-1/translation', 'DELETE /v1/translate/ai/file/file-1'] as $call) {
+            self::assertContains(self::REVIEW_HOST . ' ' . $call, $calls);
+        }
+        foreach (['POST /v1/translate/ai/file', 'GET /v1/translate/ai/file/file-2/status', 'GET /v1/translate/ai/file/file-2/translation', 'DELETE /v1/translate/ai/file/file-2'] as $call) {
+            self::assertContains('api.supertext.com ' . $call, $calls);
+        }
+        self::assertCount(8, $calls);
+        foreach ($api->requests as $request) {
+            self::assertSame('Supertext-Auth-Key secret', $request['headers']['Authorization']);
+            self::assertStringContainsString('Grav-Supertext-Translation/1.2.3', $request['headers']['User-Agent'] ?? '');
+        }
+        self::assertSame([], $api->files);
+    }
+
+    public function testReviewServiceDefaultsToSupertextsAndIsOnlyCreatedWhenNeeded(): void
+    {
+        self::assertSame('https://' . self::REVIEW_HOST . '/v1/', SupertextClient::REVIEW_URL);
+        self::assertSame(SupertextClient::REVIEW_URL, (new Settings())->reviewUrl);
+        self::assertSame(SupertextClient::REVIEW_URL, Settings::fromArray([])->reviewUrl);
+        $api = new FakeSupertext();
+        SupertextClient::fromSettings(new Settings(apiKey: 'secret'), 'ua', $api, static function (): void {})->translateMany([
+            'fr' => ['html' => '<div data-st-id="0">x</div>', 'target' => 'fr-CH', 'review' => false],
+        ]);
+        self::assertSame([], array_filter(self::calls($api), static fn(string $c): bool => str_starts_with($c, self::REVIEW_HOST)));
+    }
+
+    public function testEmptyReviewUrlSendsEverythingDirectly(): void
+    {
+        foreach ([new Settings(apiKey: 'secret', reviewUrl: ''), new Settings(apiKey: 'secret', reviewUrl: ' https://api.supertext.com/v1 ')] as $settings) {
+            $api = new FakeSupertext();
+            $client = SupertextClient::fromSettings($settings, 'ua', $api, static function (): void {});
+            self::assertFalse($client->hasReviewService(), 'no second client for an empty URL or the API URL');
+            $client->translateMany(['de' => ['html' => '<div data-st-id="0">x</div>', 'target' => 'de-CH', 'review' => true]]);
+            self::assertCount(4, $api->requests);
+            foreach (self::calls($api) as $call) {
+                self::assertStringStartsWith('api.supertext.com ', $call);
+            }
+        }
+    }
+
+    public function testOtherReviewUrlFromTheSettings(): void
+    {
+        $api = new FakeSupertext();
+        $client = SupertextClient::fromSettings(new Settings(apiKey: 'secret', reviewUrl: 'http://127.0.0.1:3000/v1/'), 'ua', $api, static function (): void {});
+        $client->translateMany(['de' => ['html' => '<div data-st-id="0">x</div>', 'target' => 'de-CH', 'review' => true]]);
+        self::assertStringStartsWith('http://127.0.0.1:3000/v1/translate/ai/file', $api->requests[0]['url']);
     }
 }

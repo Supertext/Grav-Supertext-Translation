@@ -48,6 +48,7 @@ Good to know:
 - Grav's **Translations** box lists an unpublished translation under *Not translated* as well. That is Grav's way of saying visitors can't see it yet; it disappears from that list once you publish it. Don't use *Create …* there for a language Supertext already translated.
 - If you had the translated language open in the editor while translating it again, switch to another language and back to see the new text.
 - Publishing a translation, or changing its options, does not count as editing it.
+- **Translation review:** if your administrator turned on *Translation review* for a language, reviewers (your colleagues or Supertext linguists) check and correct the translations on the website. Their corrections come into Grav the next time you translate the page into that language: after a review, translate it again. Texts reviewed once keep their corrected wording in later translations.
 
 ## Translate again after the source changes
 

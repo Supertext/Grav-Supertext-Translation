@@ -13,7 +13,13 @@ source_language: ''
 # Which Supertext language each Grav language is. Without an entry, the Grav code is used
 # only if it is exactly a Supertext code ("de-ch" → de-CH, "es" → es); a bare "de" or "fr"
 # needs an entry, because only you know the variant. Example: { de: de-CH, fr: fr-CH, en: en-GB }
+# A language with Translation review on (translations into it go through Supertext's review
+# service, see review_url) is written as { code: fr-CH, review: true } (code '' = the default).
 language_codes: {}
+
+# Supertext's review service, used for languages with Translation review on. Empty = review off
+# for every language. The environment variable SUPERTEXT_REVIEW_URL (if not empty) wins.
+review_url: 'https://localizationreview-production.up.railway.app/v1/'
 
 # Formal or informal address in languages that have it: default, more (formal), less (informal).
 # Targets without the choice (en-US, en-GB, rm, sq, …) always get Supertext's default.
