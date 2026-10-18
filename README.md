@@ -13,6 +13,17 @@ Translate Grav pages into your site's other languages with [Supertext](https://w
 
 Requires Grav 2.0+ with Admin2 and the API plugin, and a Supertext API key. No account yet? [Create one at supertext.com](https://www.supertext.com/person/en/account/signin), then generate the key at [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api) (requires the Admin role); see [Installation](docs/INSTALLATION.md#api-key).
 
+## Export for translation and import (XLIFF and HTML)
+
+Besides translating with Supertext AI, you can export a page as a file, have it translated elsewhere and import the result.
+
+- **Where:** the Supertext panel in the Admin2 page editor.
+- **Formats:** XLIFF 1.2 for translation tools such as Trados, memoQ or Phrase (formatting travels as protected tags; several target languages in one file), or HTML (one language per file) for translators or Supertext's web app, which keeps the file's head and `data-st-id` attributes, so the translated file imports as it is.
+- **Import:** the file says what it was exported from and for which language. The translations are written with the same rules as a Supertext AI translation, and a summary shows what was imported and what was skipped: source changed since the export (import those anyway with *Also import texts whose source changed since the export*), not translated, formatting changed, not in the file.
+- **Safe:** files over 10 MB, files from another system and translations that add markup the source doesn't have are refused; uploaded files aren't stored.
+
+Details: [user guide](docs/USER_GUIDE.md#translate-with-a-file-xliff-or-html).
+
 ## Documentation
 
 - [Installation and configuration](docs/INSTALLATION.md): for administrators
