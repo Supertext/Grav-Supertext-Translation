@@ -6,12 +6,14 @@ namespace Grav\Plugin\SupertextTranslation\Controller;
 
 use Grav\Common\Language\LanguageCodes;
 use Grav\Common\Page\Interfaces\PageInterface;
+use Grav\Framework\Psr7\Response;
 use Grav\Plugin\Api\Controllers\AbstractApiController;
 use Grav\Plugin\Api\Exceptions\NotFoundException;
 use Grav\Plugin\Api\Exceptions\ValidationException;
 use Grav\Plugin\Api\Response\ApiResponse;
 use Grav\Plugin\SupertextTranslation\Api\SupertextClient;
 use Grav\Plugin\SupertextTranslation\Api\SupertextException;
+use Grav\Plugin\SupertextTranslation\FileExchange;
 use Grav\Plugin\SupertextTranslation\Messages;
 use Grav\Plugin\SupertextTranslation\PageTranslator;
 use Grav\Plugin\SupertextTranslation\PluginVersion;
@@ -20,6 +22,8 @@ use Grav\Plugin\SupertextTranslation\Reporting\Reporting;
 use Grav\Plugin\SupertextTranslation\Settings;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\UploadedFileInterface;
+use Supertext\GravTranslation\Sdk\Files\TranslationFileError;
 use Supertext\GravTranslation\Sdk\V1\Client;
 use Supertext\GravTranslation\Sdk\V1\Languages;
 
@@ -28,8 +32,11 @@ use Supertext\GravTranslation\Sdk\V1\Languages;
  *
  *   GET  /api/v1/supertext/status?route=/about      languages and their translation state
  *   POST /api/v1/supertext/translate                {route, languages: [de, fr], overwrite: false}
+ *   POST /api/v1/supertext/export                   {route, languages: [de, fr], format: xliff|html} → the file (attachment)
+ *   POST /api/v1/supertext/import                   multipart: file, include_changed, overwrite → {results}
  *
- * Both need the same rights as editing the page (api.pages.write, or a page-level grant).
+ * All need the same rights as editing the page (api.pages.write, or a page-level grant); an import
+ * checks them for every page in the file. Export/import: see FileExchange (no Supertext API calls).
  * After the response, both let the Supertext reporter look for an update or a changed API key
  * (Reporting::ON_REQUEST); a translation that Supertext refused with 401/403 marks the key as
  * rejected (Reporting::AUTHENTICATION_FAILED).
@@ -136,6 +143,172 @@ final class TranslationController extends AbstractApiController
             200,
             $written ? $this->invalidationHeaders(['pages:update:' . $route, 'pages:list']) : [],
         );
+    }
+
+    /** Export for translation: the page's texts as an XLIFF 1.2 or HTML file. */
+    public function export(ServerRequestInterface $request): ResponseInterface
+    {
+        $body = $this->getRequestBody($request);
+        $page = $this->page($request, (string)($body['route'] ?? ''));
+        $settings = $this->settings();
+        [$source, $all] = $this->languages($request, $settings);
+        $messages = $this->messages($request);
+        $format = ($body['format'] ?? '') === FileExchange::FORMAT_HTML ? FileExchange::FORMAT_HTML : FileExchange::FORMAT_XLIFF;
+
+        $requested = array_values(array_diff(array_unique(array_map('strval', (array)($body['languages'] ?? []))), [$source]));
+        $unknown = array_diff($requested, $all);
+        if ($requested === [] || $unknown !== []) {
+            throw new ValidationException($requested === []
+                ? $messages->text('ERRORS.CHOOSE_LANGUAGE', [], 'Choose at least one language.')
+                : $messages->text('ERRORS.UNKNOWN_LANGUAGES', [implode(', ', $unknown)], 'Not a language of this site: ' . implode(', ', $unknown)));
+        }
+        if ($format === FileExchange::FORMAT_HTML && count($requested) !== 1) {
+            throw new ValidationException($messages->text('ERRORS.FILE_HTML_ONE_LANGUAGE', [], 'An HTML file holds exactly one language. Choose one language or XLIFF.'));
+        }
+
+        $segments = $this->translator($settings, $request)->fileSegments($page->path() ?? '', $page->template(), $source);
+        if ($segments === null) {
+            throw new ValidationException($messages->reason('no_source', [strtoupper($source)], '', sprintf('This page has no %s version to translate from.', strtoupper($source))));
+        }
+        $targets = array_map(static fn(string $lang): array => [
+            'language' => $lang,
+            'code' => $settings->targetCodeOrNull($lang) ?? FileExchange::fallbackCode($lang),
+        ], $requested);
+
+        try {
+            $file = FileExchange::export($page->rawRoute(), $settings->sourceCodeOrNull($source) ?? FileExchange::fallbackCode($source), $targets, $segments, $format);
+        } catch (TranslationFileError) {
+            $file = null; // invalid_job: nothing left to translate
+        }
+        if ($file === null) {
+            throw new ValidationException($messages->text('ERRORS.FILE_NOTHING', [], 'Nothing to translate.'));
+        }
+
+        return new Response(200, [
+            'Content-Type' => $file['contentType'],
+            'Content-Disposition' => 'attachment; filename="' . $file['filename'] . '"',
+            'Cache-Control' => 'no-store',
+            'X-Content-Type-Options' => 'nosniff',
+        ], $file['content']);
+    }
+
+    /** Import translation: an uploaded XLIFF or HTML file, written like a Supertext translation. */
+    public function import(ServerRequestInterface $request): ResponseInterface
+    {
+        $messages = $this->messages($request);
+        $upload = $request->getUploadedFiles()['file'] ?? null;
+        if (!$upload instanceof UploadedFileInterface || $upload->getError() === UPLOAD_ERR_NO_FILE) {
+            throw new ValidationException($messages->text('ERRORS.FILE_NO_UPLOAD', [], 'Please choose a file.'));
+        }
+        if (in_array($upload->getError(), [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true) || (int)$upload->getSize() > FileExchange::MAX_UPLOAD_BYTES) {
+            throw new ValidationException($messages->text('ERRORS.FILE_TOO_LARGE', [], 'The file is too large (at most 10 MB).'));
+        }
+        if ($upload->getError() !== UPLOAD_ERR_OK) {
+            throw new ValidationException($messages->text('ERRORS.FILE_NO_UPLOAD', [], 'Please choose a file.'));
+        }
+        // Read in memory only, never stored.
+        $content = $upload->getStream()->read(FileExchange::MAX_UPLOAD_BYTES + 1);
+
+        $form = (array)($request->getParsedBody() ?? []);
+        $includeChanged = filter_var($form['include_changed'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $overwrite = filter_var($form['overwrite'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        try {
+            $jobs = FileExchange::read($content);
+        } catch (TranslationFileError $e) {
+            $key = 'ERRORS.FILE_' . strtoupper($e->errorCode); // FILE_INVALID_FILE, FILE_MISSING_METADATA, FILE_TOO_LARGE
+            throw new ValidationException($messages->text($key, [], $e->getMessage()));
+        }
+
+        $settings = $this->settings();
+        [$source, $all] = $this->languages($request, $settings);
+        $translator = $this->translator($settings, $request);
+        $written = [];
+        $out = [];
+        foreach ($jobs as $job) {
+            $open = function (string $route, string $lang) use ($request, $source, $all, $translator, $overwrite, &$written): array {
+                try {
+                    $page = $this->page($request, $route);
+                } catch (NotFoundException|ValidationException) {
+                    return ['error' => FileExchange::NOT_FOUND];
+                } catch (\Throwable) {
+                    return ['error' => FileExchange::FORBIDDEN];
+                }
+                $info = ['title' => (string)$page->title()];
+                if ($lang === $source || !in_array($lang, $all, true)) {
+                    return $info + ['error' => FileExchange::NO_LANGUAGE, 'args' => [$lang]];
+                }
+                $segments = $translator->fileSegments($page->path() ?? '', $page->template(), $source);
+                if ($segments === null) {
+                    return $info + ['error' => FileExchange::NOT_FOUND];
+                }
+
+                return $info + [
+                    'segments' => $segments,
+                    'write' => function (array $texts) use ($translator, $page, $source, $lang, $overwrite, &$written): array {
+                        $result = $translator->writeImported($page->path() ?? '', $page->template(), $source, $lang, $texts, $overwrite);
+                        if ($result['result'] !== 'skipped') {
+                            $written[] = 'pages:update:' . $page->rawRoute();
+                        }
+                        return $result;
+                    },
+                ];
+            };
+
+            try {
+                $result = FileExchange::import($job, $includeChanged, $open);
+            } catch (\Throwable $e) {
+                $this->grav['log']->warning(sprintf('Supertext: importing %s failed: %s', $job->reference, $e->getMessage()));
+                $result = ['route' => null, 'language' => $job->targetLanguage, 'title' => $job->reference, 'error' => 'write_failed', 'args' => [], 'counts' => [], 'imported' => 0, 'write' => null];
+                $result['message'] = $messages->error($e);
+            }
+            $out[] = $this->importResult($result, $messages);
+        }
+        if ($written !== []) {
+            $this->clearCache();
+        }
+        GravReporting::create($this->grav, $settings)->runLater(Reporting::ON_REQUEST, $settings->apiKey);
+
+        return ApiResponse::create(
+            ['results' => $out],
+            200,
+            $written !== [] ? $this->invalidationHeaders([...array_unique($written), 'pages:list']) : [],
+        );
+    }
+
+    /**
+     * One job's result for the panel: the counts, plus `message` in the user's language for an error
+     * or a kept translation.
+     *
+     * @param array<string, mixed> $result
+     * @return array<string, mixed>
+     */
+    private function importResult(array $result, Messages $messages): array
+    {
+        $out = [
+            'route' => $result['route'],
+            'title' => $result['title'],
+            'code' => $result['language'],
+            'name' => $this->languageName((string)$result['language']),
+            'counts' => $result['counts'],
+            'imported' => $result['imported'],
+            'result' => $result['error'] !== null ? 'error' : (string)($result['write']['result'] ?? 'skipped'),
+            'message' => (string)($result['message'] ?? ''),
+        ];
+        if ($result['error'] !== null && $out['message'] === '') {
+            $english = [
+                FileExchange::OTHER_SYSTEM => 'This file belongs to another system (%s).',
+                FileExchange::NOT_FOUND => 'The page this file was exported from no longer exists.',
+                FileExchange::NO_LANGUAGE => 'The site has no language %s.',
+                FileExchange::FORBIDDEN => 'You are not allowed to edit this page.',
+            ][$result['error']] ?? (string)$result['error'];
+            $key = 'ERRORS.FILE_' . strtoupper((string)$result['error']); // FILE_OTHER_SYSTEM, FILE_NOT_FOUND, FILE_NO_LANGUAGE, FILE_FORBIDDEN
+            $out['message'] = $messages->text($key, $result['args'], vsprintf($english, $result['args'] ?: ['']));
+        } elseif (($result['write']['reason'] ?? '') !== '') {
+            $out['message'] = $messages->reason($result['write']['reason'], [], '', (string)$result['write']['message']);
+        }
+
+        return $out;
     }
 
     private function page(ServerRequestInterface $request, string $route): PageInterface

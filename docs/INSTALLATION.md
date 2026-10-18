@@ -199,6 +199,8 @@ access:
     media: { read: true, write: true }
 ```
 
+**Export for translation / Import translation** (XLIFF 1.2 or HTML files, in the Supertext panel) need the same right to edit the page; an import checks it for every page in the file. Uploads are limited to 10 MB (PHP's `upload_max_filesize` and `post_max_size` must allow that much, or larger files are refused earlier) and are only read in memory, never stored. There is nothing to configure, and no API key is needed for files.
+
 ## Interface languages
 
 The panel, the settings and the plugin's messages are available in English, German, French and Italian. They follow each user's admin language in Admin2 (*Preferences → Admin Language*). Other languages show the English texts.
@@ -223,4 +225,6 @@ The panel, the settings and the plugin's messages are available in English, Germ
 | "Cannot write default.de.md" | The web server user can't write to the page folder. Fix the folder permissions. |
 | Visitors don't see the translation | New translations are unpublished. Publish them, and clear the cache if needed. |
 | The ping address answers 404 | Version information is off (setting or `SUPERTEXT_VERSION_REPORTS=0`), or the plugin is disabled. |
+| "The file is too large (at most 10 MB)" for a smaller file | PHP's `upload_max_filesize` or `post_max_size` is lower than the file; raise them. |
+| "This file belongs to another system" / "This file wasn't exported by the Supertext plugin" | The file comes from another Supertext plugin, or the translation tool removed the file's header (HTML: the `supertext:` meta tags; XLIFF: the `<file>` attributes). Export again and keep them. |
 | Errors in more detail | Failed translations are logged in `logs/grav.log` with the page and language. |

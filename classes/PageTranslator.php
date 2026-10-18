@@ -7,6 +7,7 @@ namespace Grav\Plugin\SupertextTranslation;
 use Grav\Plugin\SupertextTranslation\Api\SupertextClient;
 use Grav\Plugin\SupertextTranslation\Api\SupertextException;
 use Grav\Plugin\SupertextTranslation\Markdown\MarkdownDocument;
+use Supertext\GravTranslation\Sdk\Files\FileSegment;
 use Supertext\GravTranslation\Sdk\V1\HtmlDocument;
 use Supertext\GravTranslation\Sdk\V1\Segment;
 use Supertext\GravTranslation\Sdk\V1\SupertextException as SdkException;
@@ -84,21 +85,7 @@ final class PageTranslator
         $sourcePage = PageFile::read($sourceFile);
         $sourceHash = $this->fingerprint($sourcePage);
 
-        // Collect what to translate: front matter fields first, then the body blocks.
-        $document = MarkdownDocument::parse($sourcePage->body);
-        $segments = [];
-        $fieldIds = [];
-        foreach ($this->settings->headerFields as $field) {
-            $value = $sourcePage->get($field);
-            if (is_string($value) && MarkdownDocument::hasText($value)) {
-                $fieldIds[$field] = count($segments);
-                $segments[] = Segment::text($value);
-            }
-        }
-        $bodyOffset = count($segments);
-        foreach ($document->segments() as $segment) {
-            $segments[] = Segment::html($segment['html']);
-        }
+        ['document' => $document, 'segments' => $segments, 'fieldIds' => $fieldIds, 'bodyOffset' => $bodyOffset] = $this->collect($sourcePage);
         if ($segments === []) {
             throw SupertextException::because('no_text', 'This page has no text to translate.');
         }
@@ -171,6 +158,109 @@ final class PageTranslator
         }
 
         return $results;
+    }
+
+    /**
+     * The texts of the page in the source language as segments of a translation file: exactly what
+     * translate() sends, keyed `field.<front matter field>` (plain text) and `body.<block>` (HTML).
+     * Null when the page has no version in the source language.
+     *
+     * @return list<FileSegment>|null
+     */
+    public function fileSegments(string $folder, string $template, string $source): ?array
+    {
+        $sourceFile = $this->sourceFile($folder, $template, $source);
+        if ($sourceFile === null) {
+            return null;
+        }
+        $collected = $this->collect(PageFile::read($sourceFile));
+        $out = [];
+        foreach ($collected['segments'] as $id => $segment) {
+            $out[] = new FileSegment($collected['keys'][$id], $segment->text, $segment->html);
+        }
+        return $out;
+    }
+
+    /**
+     * Writes texts imported from a translation file (keyed like fileSegments()) into the language
+     * file, with the same rules as translate(): a translation edited by hand or not made with
+     * Supertext is only replaced with $overwrite, a new one is unpublished unless configured
+     * otherwise, and texts without an imported translation are in the source language.
+     *
+     * @param array<string, string> $texts
+     * @return array{result: string, state: string, message: string, file: string, reason?: string}
+     */
+    public function writeImported(string $folder, string $template, string $source, string $lang, array $texts, bool $overwrite = false): array
+    {
+        $sourceFile = $this->sourceFile($folder, $template, $source);
+        if ($sourceFile === null) {
+            throw SupertextException::because('no_source', 'This page has no %s version to translate from.', [strtoupper($source)]);
+        }
+        $sourcePage = PageFile::read($sourceFile);
+        $sourceHash = $this->fingerprint($sourcePage);
+        $file = $this->targetFile($folder, $template, $lang);
+        $state = $this->state($file, $sourceHash);
+        if (!$overwrite && in_array($state, [self::STATE_EDITED, self::STATE_MANUAL], true)) {
+            return [
+                'result' => 'skipped',
+                'state' => $state,
+                'file' => basename($file),
+                'message' => $state === self::STATE_EDITED
+                    ? 'The translation was edited after it was translated. It was kept; confirm to replace it.'
+                    : 'A translation already exists that was not made with Supertext. It was kept; confirm to replace it.',
+                'reason' => $state === self::STATE_EDITED ? 'kept_edited' : 'kept_manual',
+            ];
+        }
+
+        $collected = $this->collect($sourcePage);
+        $parsed = [];
+        foreach ($collected['keys'] as $id => $key) {
+            if (isset($texts[$key]) && trim($texts[$key]) !== '') {
+                $parsed[$id] = $texts[$key];
+            }
+        }
+        $existed = is_file($file);
+        $page = $this->buildTranslation(
+            $sourcePage,
+            $existed ? PageFile::read($file) : null,
+            $collected['document'],
+            $parsed,
+            $collected['fieldIds'],
+            $collected['bodyOffset'],
+            $this->settings->targetCodeOrNull($lang) ?? str_replace('_', '-', $lang),
+            $sourceHash,
+        );
+        $page->write($file);
+
+        return ['result' => $existed ? 'updated' : 'created', 'state' => self::STATE_CURRENT, 'file' => basename($file), 'message' => ''];
+    }
+
+    /**
+     * What to translate: front matter fields first (plain text), then the body blocks (HTML).
+     *
+     * @return array{document: MarkdownDocument, segments: list<Segment>, keys: list<string>, fieldIds: array<string, int>, bodyOffset: int}
+     */
+    private function collect(PageFile $sourcePage): array
+    {
+        $document = MarkdownDocument::parse($sourcePage->body);
+        $segments = [];
+        $keys = [];
+        $fieldIds = [];
+        foreach ($this->settings->headerFields as $field) {
+            $value = $sourcePage->get($field);
+            if (is_string($value) && MarkdownDocument::hasText($value)) {
+                $fieldIds[$field] = count($segments);
+                $segments[] = Segment::text($value);
+                $keys[] = 'field.' . $field;
+            }
+        }
+        $bodyOffset = count($segments);
+        foreach ($document->segments() as $n => $segment) {
+            $segments[] = Segment::html($segment['html']);
+            $keys[] = 'body.' . $n;
+        }
+
+        return ['document' => $document, 'segments' => $segments, 'keys' => $keys, 'fieldIds' => $fieldIds, 'bodyOffset' => $bodyOffset];
     }
 
     /**

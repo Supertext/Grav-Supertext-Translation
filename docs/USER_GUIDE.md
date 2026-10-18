@@ -64,6 +64,38 @@ These languages are never replaced without asking. When you tick one and click *
 - **Replace** translates the page again and replaces the edited text.
 - **Cancel** keeps the translation as it is.
 
+## Translate with a file (XLIFF or HTML)
+
+Instead of translating with Supertext's API, you can download a page's texts as a file, have them translated elsewhere (a translator, a translation tool such as Trados, memoQ or Phrase, or Supertext's web app) and import the translated file again. The translation is written exactly like a translation with Supertext: as the language file of the page, new ones unpublished.
+
+**Export for translation:** open the page in the source language and the Supertext panel, then open **Export for translation** at the bottom of the panel.
+
+1. Choose the **File format**:
+   - **XLIFF 1.2 (for translation tools)**: the better choice for translators and translation tools; bold text, links and code appear as protected tags. One file can hold several languages.
+   - **HTML (one language per file)**: for Supertext's web app or anyone who translates HTML. Tick exactly one language.
+2. Tick the languages and click **Download file**. The file is called e.g. `grav-blog-hello-de.xlf` (the page route and the language; without the language for several languages).
+
+The file holds the same texts a translation with Supertext would send: the page content and the translated front matter fields (title, menu label, meta description). A page without texts gives *Nothing to translate.*
+
+**Send it for translation.** Translators must keep the file's structure: in an HTML file the head (the `supertext:` meta tags) and the `data-st-id` attributes must stay as they are. An HTML file can't mark a text as untranslated: imported unchanged, it writes the source text into the translation.
+
+**Import translation:** open the Supertext panel of any page (the file says which page and language it belongs to), open **Import translation**, choose the **Translated file (XLIFF or HTML)** and click **Import translation**. Files up to 10 MB.
+
+- **Also import texts whose source changed since the export** (off by default): texts edited in the source after the export are skipped unless you tick this.
+- **Replace translations edited by hand or not made with Supertext** (off by default): like translating with Supertext, such translations are kept (*It was kept; confirm to replace it.*) unless you tick this.
+
+The panel then shows, per page and language:
+
+| Line | Meaning |
+| --- | --- |
+| *Imported: n* | Texts written into the translation. |
+| *Skipped, source changed since the export: n* | The source text was edited after the export; tick the option above to import them anyway, or export again. |
+| *Not translated in the file: n* | The file has no translation for these texts (XLIFF). |
+| *Formatting changed, not imported: n* | The translation broke or added formatting (tags); fix it in the file or translate these texts again. |
+| *Not in the file: n* | Texts added since the export; translate them with Supertext or export again. |
+
+Grav keeps a translation as one file per language, so texts that weren't imported are written in the source language; translate the page again or import a complete file to fill them. Errors: *This file isn't a valid XLIFF or HTML translation file*, *This file wasn't exported by the Supertext plugin, or its header was removed*, *The file is too large (at most 10 MB)*, *This file belongs to another system (…)* (exported by another Supertext plugin), *The page this file was exported from no longer exists* (also when it was moved: its route changed), *The site has no language …*, *You are not allowed to edit this page.*
+
 ## What is translated
 
 Translated:

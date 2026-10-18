@@ -54,7 +54,27 @@ const EN = {
     FOOT_KEPT: 'Translations edited by hand are never replaced without asking.',
     NOT_MAPPED: 'not mapped',
     NOT_MAPPED_HINT: 'No Supertext language is chosen yet for: {languages}. An administrator can choose one under Plugins → Supertext Translation → Supertext language codes.',
+    EXPORT_TITLE: 'Export for translation',
+    EXPORT_HINT: 'Download the page’s texts for a translator, a translation tool or Supertext’s web app, then import the translated file below.',
+    FILE_FORMAT: 'File format',
+    FORMAT_XLIFF: 'XLIFF 1.2 (for translation tools)',
+    FORMAT_HTML: 'HTML (one language per file)',
+    DOWNLOAD: 'Download file',
+    IMPORT_TITLE: 'Import translation',
+    FILE_FIELD: 'Translated file (XLIFF or HTML)',
+    INCLUDE_CHANGED: 'Also import texts whose source changed since the export',
+    IMPORT_OVERWRITE: 'Replace translations edited by hand or not made with Supertext',
+    CHOOSE_FILE: 'Please choose a file.',
+    TOO_LARGE: 'The file is too large (at most 10 MB).',
+    IMPORT_LINE: '{title} → {name}',
+    SUMMARY_OK: 'Imported: {count}',
+    SUMMARY_CHANGED: 'Skipped, source changed since the export: {count}',
+    SUMMARY_UNTRANSLATED: 'Not translated in the file: {count}',
+    SUMMARY_INVALID: 'Formatting changed, not imported: {count}',
+    SUMMARY_MISSING: 'Not in the file: {count}',
 };
+
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 function t(key, params) {
     const i18n = window.__GRAV_I18N;
@@ -99,6 +119,11 @@ class SupertextTranslationPanel extends HTMLElement {
         this._results = null;
         this._confirm = null;
         this._loadedRoute = null;
+        this._format = 'xliff';
+        this._exportSelected = new Set();
+        this._fileBusy = false;
+        this._fileError = '';
+        this._imports = null;
     }
 
     connectedCallback() {
@@ -120,6 +145,8 @@ class SupertextTranslationPanel extends HTMLElement {
     attributeChangedCallback(name, oldValue, newValue) {
         if (name === 'route' && oldValue !== newValue && this.isConnected) {
             this._results = null;
+            this._imports = null;
+            this._exportSelected = new Set();
             this._load();
         }
     }
@@ -204,6 +231,125 @@ class SupertextTranslationPanel extends HTMLElement {
         }
         this._busy = false;
         await this._load();
+    }
+
+    // ─── Translation files ─────────────────────────────────────────────────
+    async _export() {
+        const languages = [...this._exportSelected];
+        if (!languages.length) return;
+        this._fileBusy = true;
+        this._fileError = '';
+        this._render();
+        try {
+            const response = await fetch(this._url('/supertext/export'), {
+                method: 'POST',
+                headers: this._headers(true),
+                body: JSON.stringify({ route: this.getAttribute('route'), languages, format: this._format }),
+                credentials: 'same-origin',
+            });
+            if (!response.ok) {
+                let json = null;
+                try { json = await response.json(); } catch (e) { /* not JSON */ }
+                throw new Error((json && (json.detail || json.message || json.title)) || t('HTTP_ERROR', { status: response.status }));
+            }
+            const name = /filename="?([^";]+)"?/.exec(response.headers.get('Content-Disposition') || '');
+            const url = URL.createObjectURL(await response.blob());
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = name ? name[1] : 'translation.xlf';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (e) {
+            this._fileError = e.message;
+        }
+        this._fileBusy = false;
+        this._render();
+    }
+
+    async _import() {
+        const input = this.querySelector('#st-import-file');
+        const file = input && input.files[0];
+        this._fileError = '';
+        if (!file) {
+            this._fileError = t('CHOOSE_FILE');
+            this._render();
+            return;
+        }
+        if (file.size > MAX_UPLOAD_BYTES) {
+            this._fileError = t('TOO_LARGE');
+            this._render();
+            return;
+        }
+        const data = new FormData();
+        data.append('file', file);
+        data.append('include_changed', this.querySelector('#st-import-changed').checked ? '1' : '0');
+        data.append('overwrite', this.querySelector('#st-import-overwrite').checked ? '1' : '0');
+        this._fileBusy = true;
+        this._imports = null;
+        this._render();
+        try {
+            const response = await fetch(this._url('/supertext/import'), {
+                method: 'POST',
+                headers: this._headers(false),
+                body: data,
+                credentials: 'same-origin',
+            });
+            let json = null;
+            try { json = await response.json(); } catch (e) { /* not JSON */ }
+            if (!response.ok) {
+                throw new Error((json && (json.detail || json.message || json.title)) || t('HTTP_ERROR', { status: response.status }));
+            }
+            this._imports = (json && json.data !== undefined ? json.data : json).results;
+        } catch (e) {
+            this._fileError = e.message;
+        }
+        this._fileBusy = false;
+        await this._load();
+    }
+
+    _filesHtml(s) {
+        let out = `<details class="st-files"${this._exportSelected.size ? ' open' : ''}><summary>${this._esc(t('EXPORT_TITLE'))}</summary>
+            <p class="st-muted">${this._esc(t('EXPORT_HINT'))}</p>
+            <fieldset class="st-fieldset"><legend>${this._esc(t('FILE_FORMAT'))}</legend>
+                <label class="st-option"><input type="radio" name="st-format" value="xliff" ${this._format === 'xliff' ? 'checked' : ''}> ${this._esc(t('FORMAT_XLIFF'))}</label>
+                <label class="st-option"><input type="radio" name="st-format" value="html" ${this._format === 'html' ? 'checked' : ''}> ${this._esc(t('FORMAT_HTML'))}</label>
+            </fieldset>
+            <div class="st-options">`;
+        for (const l of s.languages) {
+            out += `<label class="st-option"><input type="checkbox" data-export="${this._esc(l.code)}" ${this._exportSelected.has(l.code) ? 'checked' : ''}> ${this._esc(l.name)} <span class="st-code">${this._esc(l.supertext_code || l.code)}</span></label>`;
+        }
+        const n = this._exportSelected.size;
+        const ready = n > 0 && (this._format === 'xliff' || n === 1) && !this._fileBusy;
+        out += `</div>
+            <div class="st-actions"><button type="button" class="st-btn" data-action="export" ${ready ? '' : 'disabled'}>${this._esc(t('DOWNLOAD'))}</button></div>
+            </details>
+            <details class="st-files"${this._imports ? ' open' : ''}><summary>${this._esc(t('IMPORT_TITLE'))}</summary>
+            <label class="st-label" for="st-import-file">${this._esc(t('FILE_FIELD'))}</label>
+            <input type="file" id="st-import-file" accept=".xlf,.xliff,.html,.htm,application/x-xliff+xml,text/html">
+            <label class="st-option"><input type="checkbox" id="st-import-changed"> ${this._esc(t('INCLUDE_CHANGED'))}</label>
+            <label class="st-option"><input type="checkbox" id="st-import-overwrite"> ${this._esc(t('IMPORT_OVERWRITE'))}</label>
+            <div class="st-actions"><button type="button" class="st-btn" data-action="import" ${this._fileBusy ? 'disabled' : ''}>${this._fileBusy ? '<span class="st-spinner" aria-hidden="true"></span> ' : ''}${this._esc(t('IMPORT_TITLE'))}</button></div>`;
+        if (this._imports) {
+            out += '<ul class="st-results">';
+            for (const r of this._imports) {
+                const tone = r.result === 'error' ? 'error' : r.result === 'skipped' || !r.imported ? 'warn' : 'ok';
+                const c = r.counts || {};
+                const lines = [];
+                if (r.result !== 'error') {
+                    lines.push(t('SUMMARY_OK', { count: r.imported }));
+                    if (c.source_changed && r.imported < (c.ok || 0) + c.source_changed) lines.push(t('SUMMARY_CHANGED', { count: c.source_changed }));
+                    if (c.untranslated) lines.push(t('SUMMARY_UNTRANSLATED', { count: c.untranslated }));
+                    if (c.invalid_markup) lines.push(t('SUMMARY_INVALID', { count: c.invalid_markup }));
+                    if (c.missing) lines.push(t('SUMMARY_MISSING', { count: c.missing }));
+                }
+                if (r.message) lines.push(r.message);
+                out += `<li class="st-${tone}">${this._html('IMPORT_LINE', { name: r.name }, { title: `<strong>${this._esc(r.title)}</strong>` })}<br>${lines.map((line) => this._esc(line)).join('<br>')}</li>`;
+            }
+            out += '</ul>';
+        }
+        return out + '</details>';
     }
 
     // ─── Rendering ─────────────────────────────────────────────────────────
@@ -323,6 +469,13 @@ class SupertextTranslationPanel extends HTMLElement {
                 }
             }
 
+            if (this._fileError) {
+                body += `<div class="st-box st-error" role="alert">${this._esc(this._fileError)}</div>`;
+            }
+            if (s.languages.length) {
+                body += this._filesHtml(s);
+            }
+
             const fields = (s.translated_fields || []).map((f) => (FIELD_LABELS[f] ? t(FIELD_LABELS[f]) : f)).join(', ');
             body += `<p class="st-foot">${this._esc(fields ? t('FOOT_FIELDS', { fields }) : t('FOOT'))}
                 ${this._esc(t('FOOT_KEPT'))}</p>`;
@@ -359,6 +512,13 @@ class SupertextTranslationPanel extends HTMLElement {
                 ${TAG} .st-confirm { margin: 6px 0 0; padding-left: 20px; list-style: disc; color: var(--foreground, #111827); }
                 ${TAG} .st-results li strong { color: var(--foreground, #111827); }
                 ${TAG} .st-foot { margin-top: 18px; font-size: 12px; color: var(--muted-foreground, #6b7280); }
+                ${TAG} .st-files { border-top: 1px solid var(--border, #e5e7eb); padding-top: 10px; margin-top: 12px; }
+                ${TAG} .st-files summary { cursor: pointer; font-weight: 600; margin-bottom: 8px; }
+                ${TAG} .st-fieldset { border: 0; padding: 0; margin: 0 0 8px; }
+                ${TAG} .st-fieldset legend, ${TAG} .st-label { font-size: 13px; color: var(--muted-foreground, #6b7280); margin-bottom: 4px; display: block; }
+                ${TAG} .st-option { display: flex; gap: 8px; align-items: center; margin: 4px 0; cursor: pointer; }
+                ${TAG} .st-options { margin: 0 0 10px; }
+                ${TAG} .st-files input[type="file"] { margin: 0 0 8px; max-width: 100%; }
                 ${TAG} .st-spinner { width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: st-spin .8s linear infinite; }
                 @keyframes st-spin { to { transform: rotate(360deg); } }
             </style>
@@ -376,6 +536,16 @@ class SupertextTranslationPanel extends HTMLElement {
                 this._render();
             });
         });
+        this.querySelectorAll('input[data-export]').forEach((input) => {
+            input.addEventListener('change', () => {
+                if (input.checked) this._exportSelected.add(input.dataset.export);
+                else this._exportSelected.delete(input.dataset.export);
+                this._render();
+            });
+        });
+        this.querySelectorAll('input[name="st-format"]').forEach((input) => {
+            input.addEventListener('change', () => { this._format = input.value; this._render(); });
+        });
         this.querySelectorAll('[data-action]').forEach((button) => {
             button.addEventListener('click', () => {
                 const action = button.dataset.action;
@@ -383,6 +553,8 @@ class SupertextTranslationPanel extends HTMLElement {
                 if (action === 'translate') this._translate(false);
                 if (action === 'overwrite') this._translate(true);
                 if (action === 'cancel') { this._confirm = null; this._render(); }
+                if (action === 'export') this._export();
+                if (action === 'import') this._import();
             });
         });
     }
