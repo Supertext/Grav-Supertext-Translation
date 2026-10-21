@@ -217,7 +217,7 @@ The stand-in also answers the Commando Center's reports (`POST /api/v1/report`, 
 
 Also checked by hand (and by the screenshot script) in a real Grav 2.2.4 with Admin2: the panel loads, the editor account can translate, a save in Admin2 of an unchanged translation keeps it *current*, an edit makes it *edited*; the ping route answers without login; a save of the plugin settings in Admin2 reports `settings_saved` to the stand-in, refreshes the key check and doesn't write `supertext_status`; an unmapped language is refused with *has no Supertext language yet* while the others are translated.
 
-CI (`.github/workflows/ci.yml`) runs the tests on PHP 8.3 and 8.4, lints all PHP files, syntax-checks the panel and field scripts and runs PHPStan (see *Code quality and security checks*).
+CI (`.github/workflows/ci.yml`) runs the tests on PHP 8.3, 8.4 and 8.5, lints all PHP files, syntax-checks the panel and field scripts and runs PHPStan (see *Code quality and security checks*).
 
 ## Screenshots
 
@@ -236,7 +236,7 @@ The demo runs on Railway (project `supertext-cms-demos-php`, service `Grav`, reg
 
 - **URL:** https://grav-production.up.railway.app, admin at `/admin`
 - **Healthcheck:** `/en`.
-- **Image:** `php:8.3-apache` (only the prefork MPM is loaded at start, see the entrypoint), Grav + Admin2 2.2.4 from its GitHub release, the plugin copied from this repository.
+- **Image:** `php:8.3-apache` (only the prefork MPM is loaded at start, see the entrypoint), Grav + Admin2 2.2.11 from its GitHub release, the plugin copied from this repository.
 - **Volume** at `/data`: `user/pages`, `user/accounts`, `user/config` and `user/data` are symlinked there. Grav core, plugins and themes always come from the image, so a deploy updates the plugin.
 - **On every start** (`demo/entrypoint.sh`): seeds the sample pages on a fresh volume, merges the languages (`en` source, `de`, `fr`) into `system.yaml` (`demo/configure.php`), writes the plugin settings only if there are none yet (`de` → `de-CH`, `fr` → `fr-CH`), creates the demo accounts (`demo/seed-accounts.php`), then starts Apache on `$PORT`.
 
@@ -262,7 +262,7 @@ Grav has an editor role only as permissions, not as a named role; the editor acc
 - **PHPStan** (job `phpstan` in `ci.yml`, config `phpstan.neon`): level 5 on the plugin's own code (`supertext-translation.php`, `classes/`), not the tests, `demo/` or the bundled SDK (`lib/`, checked in its own repository). Grav isn't a Composer package, so the job unpacks the same Grav + Admin2 release as the demo into `.grav/` (git-ignored); PHPStan reads Grav core and the API plugin's classes from there. Locally:
 
   ```bash
-  mkdir .grav && curl -fsSL https://github.com/getgrav/grav/releases/download/2.2.4/grav-admin-v2.2.4.zip -o .grav/grav.zip && unzip -q .grav/grav.zip -d .grav
+  mkdir .grav && curl -fsSL https://github.com/getgrav/grav/releases/download/2.2.11/grav-admin-v2.2.11.zip -o .grav/grav.zip && unzip -q .grav/grav.zip -d .grav
   phpstan analyse            # or: php phpstan.phar analyse
   ```
 

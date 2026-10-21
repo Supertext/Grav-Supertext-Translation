@@ -15,7 +15,7 @@ RUN a2enconf grav
 
 # Grav core with Admin2 and the API plugin bundled (GitHub release asset:
 # getgrav.org only serves the latest version).
-ARG GRAV_VERSION=2.2.4
+ARG GRAV_VERSION=2.2.11
 RUN curl -fsSL -o /tmp/grav.zip "https://github.com/getgrav/grav/releases/download/${GRAV_VERSION}/grav-admin-v${GRAV_VERSION}.zip" \
  && unzip -q /tmp/grav.zip -d /tmp \
  && rm -rf /var/www/html \
