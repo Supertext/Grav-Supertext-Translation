@@ -9,7 +9,7 @@
 
 ### Changed
 
-- Tested with Grav 2.2.11 (Admin2 2.1.37, API 1.0.53): the demo, CI and the screenshot script now use it instead of 2.2.4; the tests also run on PHP 8.5.
+- Tested with Grav 2.2.14 (Admin2 2.2.2, API 1.1.2): the demo, CI and the screenshot script now use it instead of 2.2.4; the tests also run on PHP 8.5.
 - **Default Supertext languages** (bundled Supertext SDK 0.4.0): a site language you haven't chosen a Supertext language for now uses its default instead of failing: `de` → `de-DE`, `en` → `en-US`, `fr` → `fr-FR`, `it` → `it-IT`, `pt` → `pt-PT`, `zh` → `zh-Hans`, `zh-tw` → `zh-Hant`, `es-es` → `es`. The lists under *Supertext language codes* are preselected with it (*Default for …*), name the languages in your admin language, and only languages without a default (`en-ie`, `de-li`, `gsw`, …) show *— choose —* and *Not mapped*. Saved choices are kept and still win; when saving, only codes Supertext offers are stored (an older list of rows is converted to the current form). If you want Swiss German or another variant, check the lists after updating.
 - The plugin now talks to Supertext through the official Supertext SDK for PHP, bundled with the plugin (`lib/supertext-sdk`, nothing extra to install). Translating into several languages still runs in parallel. Requests carry the plugin version in the User-Agent.
 - A language pair Supertext doesn't offer now gets its own message naming the two languages, in all four interface languages.

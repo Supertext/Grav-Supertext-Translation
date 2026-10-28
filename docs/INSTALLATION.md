@@ -4,7 +4,7 @@ This guide is for administrators of a Grav site. It covers installing the plugin
 
 ## Requirements
 
-- Grav **2.0 or later** (tested with Grav 2.2.11)
+- Grav **2.0 or later** (tested with Grav 2.2.14)
 - The **Admin2** and **API** plugins (bundled with the "Grav + Admin" download; Admin2 ≥ 2.1, API ≥ 1.0.44)
 - PHP 8.3 or later with the `curl`, `dom` and `mbstring` extensions (all standard)
 - Outgoing HTTPS from the web server to `api.supertext.com` (and, for [Translation review](#translation-review), to Supertext's review service, `localizationreview-production.up.railway.app`)
